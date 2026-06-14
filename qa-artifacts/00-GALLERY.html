@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>NIBS Portal — Screenshot Gallery (QA v1.2.4)</title>
+<style>
+  :root {
+    --brand: #1F5132;
+    --gold: #C8A23A;
+    --ink: #1a1a1a;
+    --muted: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, "Segoe UI", Roboto, sans-serif; background: #f9fafb; color: var(--ink); }
+  header { background: var(--brand); color: #fff; padding: 24px 32px; }
+  header h1 { margin: 0 0 6px 0; font-size: 1.6rem; }
+  header p { margin: 0; opacity: .85; font-size: .95rem; }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px 32px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 24px; }
+  .kpi { background: #fff; border-radius: 10px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .kpi .label { font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+  .kpi .value { font-size: 2rem; font-weight: 700; margin: 6px 0; color: var(--brand); }
+  .kpi .delta { font-size: .8rem; color: var(--muted); }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+  .card { background: #fff; border-radius: 10px; padding: 18px; box-shadow: 0 1px 3px rgba(0,0,0,.05); }
+  .card h2 { margin: 0 0 8px 0; font-size: 1.05rem; color: var(--brand); }
+  .card .meta { font-size: .8rem; color: var(--muted); margin-bottom: 12px; }
+  .card iframe { width: 100%; height: 420px; border: 1px solid #e5e7eb; border-radius: 6px; background: #fff; }
+  .card iframe.tall { height: 700px; }
+  .card iframe.short { height: 280px; }
+  .footer { text-align: center; padding: 24px; color: var(--muted); font-size: .85rem; }
+  .pass { color: #065f46; font-weight: 600; }
+  pre { background: #f3f4f6; padding: 10px; border-radius: 6px; font-size: .8rem; overflow-x: auto; }
+</style>
+</head>
+<body>
+<header>
+  <h1>NIBS Office Administrator Pathway Portal — QA Screenshot Gallery</h1>
+  <p>Build v1.2.4 · 2026-06-14 · Smoke test 73/73 PASS · UAT-ready</p>
+</header>
+
+<div class="container">
+  <div class="kpis">
+    <div class="kpi"><div class="label">Smoke test</div><div class="value pass">73/73</div><div class="delta">0 failures</div></div>
+    <div class="kpi"><div class="label">Modules</div><div class="value">36</div><div class="delta">15 KM + 11 PM + 10 WM</div></div>
+    <div class="kpi"><div class="label">Enriched content</div><div class="value">98</div><div class="delta">All Published</div></div>
+    <div class="kpi"><div class="label">POE items</div><div class="value">23</div><div class="delta">10 WMs · 23 evidence groups</div></div>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2>1. Public landing page</h2>
+      <div class="meta">QCTO-aligned, Netflix-style hero · 17,727 bytes</div>
+      <iframe src="03-landing.html"></iframe>
+    </div>
+    <div class="card">
+      <h2>2. Admin content review (NEW in v1.1)</h2>
+      <div class="meta">SME workflow for AI-enriched content · 12,309 bytes</div>
+      <iframe src="10-admin-page-_admin_content-review.html" class="tall"></iframe>
+    </div>
+
+    <div class="card">
+      <h2>3. Admin curriculum mapping</h2>
+      <div class="meta">730 elements · 36 modules · 206 IACs · 8,452 bytes</div>
+      <iframe src="10-admin-page-_admin_curriculum-mapping.html" class="tall"></iframe>
+    </div>
+    <div class="card">
+      <h2>4. Admin POE templates</h2>
+      <div class="meta">10 Work Experience Modules · 23 evidence groups · 4,659 bytes</div>
+      <iframe src="10-admin-page-_admin_poe-templates.html"></iframe>
+    </div>
+
+    <div class="card">
+      <h2>5. Learner Netflix-style dashboard</h2>
+      <div class="meta">Continue / Due soon / Missing POE / Recommended next · 9,371 bytes</div>
+      <iframe src="13-learner-page-_app_dashboard.html" class="tall"></iframe>
+    </div>
+    <div class="card">
+      <h2>6. Learner pathway (36 modules)</h2>
+      <div class="meta">15 KM + 11 PM + 10 WM grouped by type · 6,569 bytes</div>
+      <iframe src="13-learner-page-_app_pathway.html" class="tall"></iframe>
+    </div>
+
+    <div class="card">
+      <h2>7. Lesson with enriched content (NEW in v1.1)</h2>
+      <div class="meta">11 colour-coded blocks · Quiz · Workbook · POE · 12,786 bytes</div>
+      <iframe src="15-lesson-page.html" class="tall"></iframe>
+    </div>
+    <div class="card">
+      <h2>8. POE editor</h2>
+      <div class="meta">23 POE items · 10 WMs · supervisor sign-off · 4,683 bytes</div>
+      <iframe src="13-learner-page-_app_poe.html"></iframe>
+    </div>
+
+    <div class="card">
+      <h2>9. Admin reports</h2>
+      <div class="meta">Reports dashboard · 6,375 bytes</div>
+      <iframe src="10-admin-page-_admin_reports.html"></iframe>
+    </div>
+    <div class="card">
+      <h2>10. Admin users</h2>
+      <div class="meta">User management · 5,184 bytes</div>
+      <iframe src="10-admin-page-_admin_users.html"></iframe>
+    </div>
+
+    <div class="card">
+      <h2>11. Admin audit</h2>
+      <div class="meta">Append-only audit trail · 2,220 bytes</div>
+      <iframe src="10-admin-page-_admin_audit.html" class="short"></iframe>
+    </div>
+    <div class="card">
+      <h2>12. Workbook</h2>
+      <div class="meta">Save / submit / version history · 3,495 bytes</div>
+      <iframe src="13-learner-page-_app_workbook.html"></iframe>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 20px;">
+    <h2>Sample API response — KM-01-KT01 enriched content</h2>
+    <div class="meta">Real response from <code>GET /api/lessons/topic-content/&lt;KM-01-KT01 id&gt;</code></div>
+    <pre>{
+  "curriculum_element_id": "...",
+  "why_it_matters": "Every office, from a small training provider in Katlehong to a municipality service desk in Limpopo, runs on the same basic plumbing: someone decides who does what, who reports to whom, and how work flows from one desk to the next...",
+  "plain_english": "An \"organisation\" is just a group of people working toward a shared goal. \"Administrative\" work is the glue that keeps them coordinated: scheduling, filing, communicating, tracking...",
+  "sa_example": "Municipal service desk, eThekwini — Thandi is an office administrator at a municipal service desk. Her team handles water and electricity queries. The organogram shows that meter-reading complaints go to Revenue, burst pipes go to Technical Services, and account queries go to Billing. When a resident walks in, Thandi does not guess — she reads the organogram, asks two clarifying questions, and routes the call.",
+  "scenario": "You are the office administrator at a small private training provider. The office has 6 staff: a principal, two facilitators, a finance officer, an IT support contractor, and you. A new learner, Sipho, walks in asking to register for the Office Administrator programme. The principal is in a meeting. The facilitators are teaching. The finance officer is at lunch. The IT contractor is offsite. Walk yourself through: who do you approach first, what document do you start the file with, and where do you store it under POPIA?",
+  "step_by_step": "1. Get the organogram. If your office does not have one, draw it.\n2. Identify the three layers in most small offices: top (principal/CEO), middle (manager), operational (you and colleagues).\n3. For each role, write one sentence describing what they do.\n4. Identify your direct supervisor.\n5. Identify the people you support.\n6. Find the written policies. Read them.\n7. Map the workflows.",
+  "common_mistakes": "Skipping the org chart; asking everyone when you do not know; confusing authority with status; ignoring informal networks.",
+  "learn_by_doing": "Draw the organogram of your current office (or a fictional one if you are not yet employed). Under each role, write their main responsibility, one task they delegate to you, and the policy document that governs their work. Output: a one-page organogram with annotations. Save it as a PDF. This becomes part of your POE.",
+  "workbook_questions": [ ... 4 questions ... ],
+  "quiz": [ ... 3 questions with answers ... ],
+  "references": [
+    { "name": "Office Administrator Curriculum Document, 334102002-KM-01, Topic KM-01-KT01 (QCTO)", "url": "https://www.qcto.org.za", "supports": "Module structure, official IACs", "date": "2026-06-14" },
+    { "name": "SAQA — South African Qualifications Authority", "url": "https://www.saqa.org.za", "supports": "NQF context", "date": "2026-06-14" },
+    { "name": "QCTO — Quality Council for Trades and Occupations", "url": "https://www.qcto.org.za", "supports": "Occupational certificate framework", "date": "2026-06-14" },
+    { "name": "Basic Conditions of Employment Act, No. 75 of 1997", "url": "https://www.labour.gov.za", "supports": "HR context", "date": "2026-06-14" },
+    { "name": "Mind Tools — \"Span of Control\"", "url": "https://www.mindtools.com", "supports": "Practical explanation", "date": "2026-06-14" }
+  ],
+  "up_to_date_note": "Requires periodic review. Workplace structures change with technology and hybrid work models. Review annually.",
+  "review_status": "published"
+}</pre>
+  </div>
+
+  <div class="card" style="margin-top: 20px;">
+    <h2>Smoke test output (canonical 73 checks)</h2>
+    <div class="meta">Run with <code>BASE=http://127.0.0.1:8088 ADMIN_DEFAULT_PASSWORD=change-on-first-login bash docs/smoke.sh</code></div>
+    <pre>================================================
+PASS: 73    FAIL: 0
+================================================</pre>
+  </div>
+</div>
+
+<div class="footer">
+  <p>Build: v1.2.4 (main: 7303031 / develop: bc2b2c5) · Repo: github.com/coachtee/nibs-office-admin-portal · For internal UAT use only</p>
+</div>
+</body>
+</html>
