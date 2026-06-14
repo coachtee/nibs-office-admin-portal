@@ -113,14 +113,32 @@
       const l = d.lesson;
       const main = document.getElementById('main');
 
-      // Try to fetch enriched content using curriculum_element_id from the lesson
+      // Try to fetch enriched content using curriculum_element_id from the lesson.
+      // If the lesson's CE is a module (no content yet), look up the first topic
+      // under that module and fetch its enriched content.
       let enriched = null;
-      if (l.curriculum_element_id) {
+      let contentCE = l.curriculum_element_id;
+      try {
+        enriched = await NIBS.api('/api/lessons/topic-content/' + contentCE);
+      } catch (e) {
+        enriched = null;
+      }
+      if (!enriched && l.curriculum_element_id) {
+        // Try the first topic under this module
         try {
-          enriched = await NIBS.api('/api/lessons/topic-content/' + l.curriculum_element_id);
-        } catch (e) {
-          enriched = null;
-        }
+          const tree = await NIBS.api('/api/curriculum/elements/' + l.curriculum_element_id);
+          if (tree && tree.element && tree.element.type === 'knowledge_module') {
+            // Find topics
+            const kids = await NIBS.api('/api/curriculum/elements?parent_id=' + l.curriculum_element_id);
+            const topics = (kids.elements || []).filter(e => e.type === 'topic');
+            if (topics.length) {
+              contentCE = topics[0].id;
+              try {
+                enriched = await NIBS.api('/api/lessons/topic-content/' + contentCE);
+              } catch (e2) { enriched = null; }
+            }
+          }
+        } catch (e) { /* swallow */ }
       }
 
       const isStaff = ['superadmin','admin','coursemanager','facilitator','assessor','moderator'].includes(me.role);
