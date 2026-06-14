@@ -1,0 +1,3 @@
+[db] Initialized at ./database/nibs.db
+[env] APP_ENV=development APP_URL=http://uat-office.naleli.co.za PORT=8088
+NIBS Pathway Portal running on http://0.0.0.0:8088 (APP_ENV=development, APP_URL=http://uat-office.naleli.co.za)

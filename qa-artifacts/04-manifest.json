@@ -1,0 +1,13 @@
+{
+  "name": "NIBS Pathway Portal — Office Administrator",
+  "short_name": "NIBS Portal",
+  "description": "Guided, practical, QCTO-aligned pathway to becoming a confident, workplace-ready Office Administrator in South Africa.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#FAF6EE",
+  "theme_color": "#1F5132",
+  "icons": [
+    { "src": "/static/images/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/static/images/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

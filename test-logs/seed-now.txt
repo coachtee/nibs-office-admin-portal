@@ -1,0 +1,17 @@
+[db] Initialized at ./database/nibs.db
+skip moderator_mappings no such table: moderator_mappings
+  topic_content rows loaded: 49
+Seed complete — official 334102002 curriculum loaded.
+APP_ENV=development
+Users:
+  superadmin@naleli.co.za / ChangeMe123!  (legacy default — rotate in production)
+  admin@naleli.co.za / ChangeMe123!  (legacy default — set ADMIN_DEFAULT_PASSWORD in production)
+  coursemanager@naleli.co.za / ChangeMe123!
+  facilitator@naleli.co.za / ChangeMe123!
+  assessor@naleli.co.za / ChangeMe123!
+  moderator@naleli.co.za / ChangeMe123!
+  finance@naleli.co.za / ChangeMe123!
+  supervisor@naleli.co.za / ChangeMe123!
+  student@naleli.co.za / Student123!   (active)
+  learner2@naleli.co.za / Student123!  (active)
+  pending@naleli.co.za / Student123!   (pending payment)

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Workbook — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/app/workbook'));
+      const [q, a] = await Promise.all([NIBS.api('/api/workbook/questions'), NIBS.api('/api/workbook/answers')]);
+      render(q.questions, a.answers);
+    })();
+
+    function render(questions, answers) {
+      const main = document.getElementById('main');
+      const aMap = new Map(answers.map(a => [a.question_id, a]));
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Workbook</div>
+            <h1>Your workbook</h1>
+            <div class="meta">${questions.length} activities linked to your modules</div>
+          </div>
+        </div>
+        <div class="demo-banner">⚠ Demo content mode — replace with official QCTO workbook when uploaded.</div>
+        <div id="qList"></div>
+      `;
+      const list = document.getElementById('qList');
+      questions.forEach((q, idx) => {
+        const a = aMap.get(q.id);
+        const card = document.createElement('div');
+        card.className = 'poe-section';
+        card.innerHTML = `
+          <div class="head">
+            <h3>${q.code || 'WB'} — Activity ${idx + 1}</h3>
+            ${a ? NIBS.statusPill(a.status) : '<span class="pill grey">not started</span>'}
+          </div>
+          <p>${NIBS.esc(q.prompt)}</p>
+          ${q.helper ? `<div class="why">💡 ${NIBS.esc(q.helper)}</div>` : ''}
+          <textarea id="ans_${q.id}" placeholder="Your response...">${NIBS.esc((a && a.answer_text) || '')}</textarea>
+          <div class="flex gap-12 mt-8">
+            <button class="btn" data-act="draft" data-q="${q.id}">💾 Save draft</button>
+            <button class="btn primary" data-act="submit" data-q="${q.id}">Submit</button>
+            ${a ? `<span class="small muted">Attempt ${a.attempt} • ${a.submitted_at ? 'Submitted ' + NIBS.fmtDateTime(a.submitted_at) : 'Draft'}</span>` : ''}
+          </div>
+          ${a && a.facilitator_feedback ? `<div class="why mt-8"><b>Facilitator:</b> ${NIBS.esc(a.facilitator_feedback)}</div>` : ''}
+        `;
+        list.appendChild(card);
+      });
+      list.addEventListener('click', async (e) => {
+        const btn = e.target.closest('button[data-act]');
+        if (!btn) return;
+        const qid = btn.dataset.q;
+        const act = btn.dataset.act;
+        const text = document.getElementById('ans_' + qid).value;
+        try {
+          await NIBS.api('/api/workbook/answers', { method: 'POST', body: { question_id: qid, answer_text: text, status: act === 'submit' ? 'submitted' : 'draft' } });
+          NIBS.toast(act === 'submit' ? 'Submitted for review' : 'Draft saved', 'ok');
+          if (act === 'submit') setTimeout(() => location.reload(), 600);
+        } catch (err) { NIBS.toast('Save failed: ' + err.message, 'err'); }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,90 @@
+=== 1. Public landing page ===
+  ✅ GET / (200)
+  ✅ manifest
+  ✅ sw.js
+  ✅ css
+=== 2. Super admin ===
+  ✅ me superadmin
+  ✅ dashboard
+  ✅ users list
+=== 3. Admin ===
+  ✅ me admin
+  ✅ audit
+  ✅ curriculum matrix
+  ✅ POE templates
+  ✅ create user
+=== 4. Active learner ===
+  ✅ me learner
+  ✅ dashboard
+  ✅ pathway
+  ✅ my submissions
+  ✅ lesson fetch
+  ✅ lesson progress
+  ✅ workbook answers
+  ✅ workbook draft
+  ✅ poe item
+  ✅ poe submit
+=== 5. Pending payment learner ===
+  ✅ me pending
+  ✅ dashboard locked
+  ✅ pending can't submit (402)
+  ✅ pending can't draft (402)
+=== 6. Facilitator ===
+  ✅ me facilitator
+  ✅ cohorts
+  ✅ facilitator learner
+  ✅ facilitator feedback
+  ✅ attendance
+  ✅ class note
+=== 7. Assessor ===
+  ✅ me assessor
+  ✅ assessor queue
+  ✅ assessor fetch
+  ✅ assessor decide
+=== 8. Moderator ===
+  ✅ me moderator
+  ✅ moderator queue
+  ✅ moderator review
+  ✅ moderator decide
+=== 9. Workplace supervisor ===
+  ✅ me supervisor
+  ✅ supervisor learners
+  ✅ supervisor signoff
+=== 10. Finance ===
+  ✅ me finance
+  ✅ finance learners
+  ✅ finance mark paid
+=== 11. PDF exports ===
+  ✅ poe-pack (14097 bytes)
+  ✅ workbook (3280 bytes)
+  ✅ assessment (3361 bytes)
+  ✅ moderation (3266 bytes)
+  ✅ evidence-index (3020 bytes)
+  ✅ missing-evidence (3427 bytes)
+  ✅ progress (3250 bytes)
+=== 12. All page routes (200) ===
+  ✅ GET / (200)
+  ✅ GET /login (200)
+  ✅ GET /apply (200)
+  ✅ GET /app (200)
+  ✅ GET /admin (200)
+  ✅ GET /facilitator (200)
+  ✅ GET /assessor (200)
+  ✅ GET /moderator (200)
+  ✅ GET /supervisor (200)
+  ✅ GET /finance (200)
+  ✅ GET /admin/users (200)
+  ✅ GET /admin/course-builder (200)
+  ✅ GET /admin/curriculum-mapping (200)
+  ✅ GET /admin/poe-templates (200)
+  ✅ GET /admin/reports (200)
+  ✅ GET /admin/audit (200)
+  ✅ GET /app/pathway (200)
+  ✅ GET /app/workbook (200)
+  ✅ GET /app/poe (200)
+=== 13. After finance paid, pending learner is now active ===
+  ✅ dashboard now active
+
+================================================
+PASS: 73    FAIL: 0
+================================================

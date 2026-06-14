@@ -1,0 +1,108 @@
+1. Seed: 0
+2. Server PID: 776
+3. Ready in 3s
+4. Healthz check:
+{"ok":true,"ts":"2026-06-14T20:32:10.475Z"}
+
+5. Public landing: 17727 bytes
+6. Manifest: 530 bytes
+7. Admin login response:
+{"ok":true,"user":{"id":"24c4ef5a-7093-42c5-bebd-2aa77f5f089f","full_name":"Programme Admin","role":"admin","status":"active","payment_status":"active"}}
+8. /me before change:
+  must_change_password: 1 | email: admin@naleli.co.za | role: admin
+9. /api/users before change (should be 403):
+   {"error":"must_change_password","message":"You must change your password before continuing."}
+10. Change password:
+{"ok":true}
+11. /me after change:
+  must_change_password: 0
+12. /api/users after change: 3082 bytes
+13. GET /admin/dashboard -> 404 (702 bytes)
+13. GET /admin/curriculum-mapping -> 200 (8452 bytes)
+13. GET /admin/content-review -> 200 (12309 bytes)
+13. GET /admin/poe-templates -> 200 (4659 bytes)
+13. GET /admin/reports -> 200 (6375 bytes)
+13. GET /admin/audit -> 200 (2220 bytes)
+13. GET /admin/users -> 200 (5184 bytes)
+14. Learner dashboard (excerpt):
+  user: Amahle Khumalo
+  course_progress: {'lessons_completed': 3, 'lessons_total': 36, 'modules_done': 2, 'modules_total': 36, 'km_done': 0, 'pm_done': 2, 'wm_done': 0, 'poe_competent': 0, 'poe_total': 23, 'final_approved': 0, 'wm_supervisor_signed': 1, 'wm_total': 23}
+  modules by type: knowledge=15, practical_skill=11, work_experience=10
+  continue: Staffing and people support
+15. GET /app/dashboard (learner) -> 200 (9371 bytes)
+15. GET /app/pathway (learner) -> 200 (6569 bytes)
+15. GET /app/workbook (learner) -> 200 (3495 bytes)
+15. GET /app/poe (learner) -> 200 (4683 bytes)
+16. First lesson id: 1722be2b-9e72-4125-b1ca-0e7015041559
+  title: Effective office administration and management
+  curriculum_element_id: 5caebbd8-4aa3-4845-9630-1e0d77a7990c
+17. Lesson page: 12786 bytes
+18. KM-01-KT01 element id: 0ca091fd-7797-4b7f-bc25-324002f8d5fd
+19. Enriched content (excerpt):
+  why_it_matters[:120]: 
+  plain_english[:120]: 
+  sa_example[:120]: 
+  has scenario: False
+  has step_by_step: False
+  has common_mistakes: False
+  has learn_by_doing: False
+  workbook_questions: 0
+  quiz: 0
+  references: 0
+  status: None
+  total content rows: 49
+  by status: {'draft_ai': 49}
+
+=== 20. SMOKE TEST (canonical 73-check) ===
+================================================
+PASS: 73    FAIL: 0
+================================================
+smoke exit: 0
+PASS: 73 FAIL: 0
+Users: 12
+Cohorts: 1
+Curriculum elements: 730
+Curriculum documents: 3
+Modules: 36
+Lessons: 36
+POE sections: 10
+POE evidence groups: 23
+POE items: 23
+POE fields: 345
+Enriched content rows: 98
+
+=== DONE — all artifacts in qa-artifacts/ ===
+total 249
+drwxr-xr-x  2 root root  4096 Jun 14 20:32 .
+drwxr-xr-x 14 root root  4096 Jun 14 20:29 ..
+-rw-r--r--  1 root root   750 Jun 14 20:32 01-seed.txt
+-rw-r--r--  1 root root   227 Jun 14 20:32 02-server.txt
+-rw-r--r--  1 root root 17727 Jun 14 20:32 03-landing.html
+-rw-r--r--  1 root root   530 Jun 14 20:32 04-manifest.json
+-rw-r--r--  1 root root   153 Jun 14 20:32 05-admin-login.json
+-rw-r--r--  1 root root   491 Jun 14 20:32 06-admin-me-before.json
+-rw-r--r--  1 root root    11 Jun 14 20:32 07-admin-change.json
+-rw-r--r--  1 root root   491 Jun 14 20:32 08-admin-me-after.json
+-rw-r--r--  1 root root  3082 Jun 14 20:32 09-admin-users.json
+-rw-r--r--  1 root root  2220 Jun 14 20:32 10-admin-page-_admin_audit.html
+-rw-r--r--  1 root root 12309 Jun 14 20:32 10-admin-page-_admin_content-review.html
+-rw-r--r--  1 root root  8452 Jun 14 20:32 10-admin-page-_admin_curriculum-mapping.html
+-rw-r--r--  1 root root   702 Jun 14 20:32 10-admin-page-_admin_dashboard.html
+-rw-r--r--  1 root root  4659 Jun 14 20:32 10-admin-page-_admin_poe-templates.html
+-rw-r--r--  1 root root  6375 Jun 14 20:32 10-admin-page-_admin_reports.html
+-rw-r--r--  1 root root  5184 Jun 14 20:32 10-admin-page-_admin_users.html
+-rw-r--r--  1 root root   154 Jun 14 20:32 11-learner-login.json
+-rw-r--r--  1 root root 36540 Jun 14 20:32 12-learner-dashboard.json
+-rw-r--r--  1 root root  9371 Jun 14 20:32 13-learner-page-_app_dashboard.html
+-rw-r--r--  1 root root  6569 Jun 14 20:32 13-learner-page-_app_pathway.html
+-rw-r--r--  1 root root  4683 Jun 14 20:32 13-learner-page-_app_poe.html
+-rw-r--r--  1 root root  3495 Jun 14 20:32 13-learner-page-_app_workbook.html
+-rw-r--r--  1 root root  2040 Jun 14 20:32 14-lesson.json
+-rw-r--r--  1 root root 12786 Jun 14 20:32 15-lesson-page.html
+-rw-r--r--  1 root root    25 Jun 14 20:32 16-enriched-content.json
+-rw-r--r--  1 root root 17522 Jun 14 20:32 17-content-review-list.json
+-rw-r--r--  1 root root  2175 Jun 14 20:32 18-smoke.txt
+-rw-r--r--  1 root root   191 Jun 14 20:32 19-db-summary.txt
+-rw-r--r--  1 root root   469 Jun 14 20:32 admin.cookie
+-rw-r--r--  1 root root   473 Jun 14 20:32 learner.cookie
+-rw-r--r--  1 root root  2666 Jun 14 20:32 qa-run-2.txt
