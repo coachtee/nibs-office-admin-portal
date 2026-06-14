@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Audit Trail — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/admin/audit'));
+      const d = await NIBS.api('/api/audit?limit=300');
+      render(d.rows);
+    })();
+
+    function render(rows) {
+      const main = document.getElementById('main');
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Admin • Audit</div>
+            <h1>Audit trail</h1>
+            <div class="meta">${rows.length} events (latest)</div>
+          </div>
+        </div>
+        <div class="card pad-lg">
+          <table class="tbl">
+            <thead><tr><th>When</th><th>User</th><th>Role</th><th>Action</th><th>Old → New</th><th>Comment</th><th>Related</th></tr></thead>
+            <tbody>${rows.map(r => `<tr>
+              <td class="small">${NIBS.fmtDateTime(r.created_at)}</td>
+              <td>${NIBS.esc(r.full_name || r.user_id || '—')}</td>
+              <td><span class="pill">${r.role || '—'}</span></td>
+              <td><b>${NIBS.esc(r.action)}</b></td>
+              <td class="small">${NIBS.esc((r.old_status || '—') + ' → ' + (r.new_status || '—'))}</td>
+              <td class="small muted">${NIBS.esc(r.comment || '')}</td>
+              <td class="small">${r.related_learner ? 'Learner ' + NIBS.esc(r.related_learner.slice(0,8)) : ''} ${r.related_poe_item ? 'POE ' + NIBS.esc(r.related_poe_item.slice(0,8)) : ''}</td>
+            </tr>`).join('') || '<tr><td colspan="7" class="muted">No events.</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

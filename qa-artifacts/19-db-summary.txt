@@ -1,0 +1,11 @@
+Users: 12
+Cohorts: 1
+Curriculum elements: 730
+Curriculum documents: 3
+Modules: 36
+Lessons: 36
+POE sections: 10
+POE evidence groups: 23
+POE items: 23
+POE fields: 345
+Enriched content rows: 98

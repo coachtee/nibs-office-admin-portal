@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pathway — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/app/pathway'));
+      const data = await NIBS.api('/api/learner/pathway');
+      render(data);
+    })();
+
+    function render(d) {
+      const main = document.getElementById('main');
+      const tabs = d.tabs || [];
+      const cur = tabs[0];
+      const moduleCard = (m) => `
+        <div class="mod-card">
+          <div class="cover ${m.type==='practical_skill'?'gold':m.type==='work_experience'?'cream':''}">
+            <span class="type">${(m.type||'').replace(/_/g,' ')}</span>
+            <span>${NIBS.esc(m.code)}</span>
+            <span class="code">NQF ${m.nqf_level || '—'} • ${m.credits || '—'} cr</span>
+          </div>
+          <div class="body">
+            <h4>${NIBS.esc(m.title)}</h4>
+            <div class="sub">${NIBS.esc((m.description || '').slice(0, 110))}…</div>
+            <div class="meta-row"><span>${NIBS.statusPill(m.status || 'published')}</span><span>${m.credits || 0} credits</span></div>
+          </div>
+        </div>`;
+      const poeItem = (it) => `
+        <div class="poe-item">
+          <div class="item-head">
+            <div>
+              <h4>${NIBS.esc(it.code || '')} — ${NIBS.esc(it.title)}</h4>
+              <div class="meta">${NIBS.esc(it.section_title || '')}${it.eisa_focus_area ? ' • EISA FA ' + it.eisa_focus_area : ''}</div>
+            </div>
+            <a class="btn sm primary" href="/app/poe/${it.id}">Open</a>
+          </div>
+          <div class="meta">Linked: ${NIBS.esc(it.linked_outcome || 'Office Administrator exit-level outcomes')}</div>
+        </div>`;
+
+      window.__renderTab = function (key) {
+        const tab = tabs.find(t => t.key === key) || tabs[0];
+        document.querySelectorAll('.tabs .tab').forEach(b => b.classList.toggle('active', b.dataset.key === tab.key));
+        const body = document.getElementById('tabBody');
+        if (tab.key === 'poe') {
+          body.innerHTML = (tab.sections || []).map(s => `
+            <section class="poe-section">
+              <div class="head">
+                <h3>${NIBS.esc(s.title)}</h3>
+                <div class="flex gap-8">
+                  <span class="pill">${NIBS.esc(s.code || '')}</span>
+                  ${s.linked_eisa_focus_areas && JSON.parse(s.linked_eisa_focus_areas || '[]').length ? `<span class="pill gold">EISA FA ${JSON.parse(s.linked_eisa_focus_areas)[0]}</span>` : ''}
+                </div>
+              </div>
+              <p class="muted small">${NIBS.esc(s.description || '')}</p>
+              <div class="grid-2 mt-8">${(tab.items || []).filter(i => i.section_id === s.id).map(poeItem).join('') || '<div class="muted small">No items in this section yet.</div>'}</div>
+            </section>
+          `).join('') || '<div class="muted">No POE items yet.</div>';
+        } else if (['knowledge','practical_skill','work_experience'].includes(tab.key)) {
+          body.innerHTML = `<div class="grid-3">${(tab.items || []).map(moduleCard).join('') || '<div class="muted">No modules yet.</div>'}</div>`;
+        } else if (tab.key === 'workbook') {
+          body.innerHTML = `<div class="card pad-lg">
+            <h3>Workbook</h3>
+            <p class="muted">${tab.summary || ''} activities are linked to your modules. Open the workbook to start.</p>
+            <a class="btn primary mt-8" href="/app/workbook">Open workbook →</a>
+          </div>`;
+        } else if (tab.key === 'assessment') {
+          body.innerHTML = `<div class="card pad-lg">
+            <h3>Internal Assessment</h3>
+            <p class="muted">${tab.summary || ''}</p>
+            <ul class="muted">
+              <li>Submit POE items online — one per official Work Experience Module</li>
+              <li>Facilitator reviews & returns for correction if needed</li>
+              <li>Assessor makes the formal competence decision against the official Internal Assessment Criteria</li>
+              <li>Workplace supervisor signs off workplace evidence</li>
+            </ul>
+          </div>`;
+        } else if (tab.key === 'moderation') {
+          body.innerHTML = `<div class="card pad-lg">
+            <h3>Moderation</h3>
+            <p class="muted">${tab.summary || ''}</p>
+            <p class="muted">A sample of your work is reviewed by an independent moderator against the same official criteria. The decision is logged and added to your POE pack.</p>
+          </div>`;
+        } else if (tab.key === 'final') {
+          body.innerHTML = `<div class="card pad-lg">
+            <h3>Final Readiness</h3>
+            <p class="muted">${tab.summary || ''}</p>
+            <p class="muted">Once all 36 official modules are complete, all POE evidence is competent and signed off, and the moderation sample is approved, your EISA application can be prepared.</p>
+          </div>`;
+        }
+      };
+
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Pathway • ${d.course ? d.course.code : ''}</div>
+            <h1>${d.course ? NIBS.esc(d.course.title) : 'Pathway'}</h1>
+            <div class="meta">${d.course ? `${d.course.qualification_type} • NQF ${d.course.nqf_level} • ${d.course.total_credits} credits` : ''}</div>
+          </div>
+        </div>
+        <div class="demo-banner">⚠ Pathway built from the official QCTO curriculum 334102002 (15 KM + 11 PM + 10 WM = 36 modules, 445 credits).</div>
+
+        <div class="tabs" id="tabsEl">
+          ${tabs.map(t => `<button class="tab" data-key="${t.key}">${NIBS.esc(t.label)} ${t.count != null ? `<span class="pill" style="margin-left:6px;">${t.count}</span>` : ''}</button>`).join('')}
+        </div>
+        <div id="tabBody"></div>
+      `;
+      document.querySelectorAll('.tabs .tab').forEach(b => b.addEventListener('click', () => window.__renderTab(b.dataset.key)));
+      window.__renderTab(tabs[0]?.key || 'knowledge');
+    }
+  </script>
+</body>
+</html>

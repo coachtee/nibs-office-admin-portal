@@ -32,6 +32,7 @@ router.get('/admin/curriculum-mapping', (_req, res) => res.sendFile(path.join(PU
 router.get('/admin/poe-templates', (_req, res) => res.sendFile(path.join(PUBLIC, 'pages', 'admin', 'poe-templates.html')));
 router.get('/admin/reports', (_req, res) => res.sendFile(path.join(PUBLIC, 'pages', 'admin', 'reports.html')));
 router.get('/admin/audit', (_req, res) => res.sendFile(path.join(PUBLIC, 'pages', 'admin', 'audit.html')));
+router.get('/admin/content-review', (_req, res) => res.sendFile(path.join(PUBLIC, 'pages', 'admin', 'content-review.html')));
 
 // Facilitator / Assessor / Moderator / Supervisor / Finance
 router.get('/facilitator', (_req, res) => res.sendFile(path.join(PUBLIC, 'pages', 'facilitator', 'dashboard.html')));

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Users — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/admin/users'));
+      const users = await NIBS.api('/api/users');
+      render(users.users);
+    })();
+
+    function render(users) {
+      const main = document.getElementById('main');
+      const roleOpts = ['super_admin','admin','course_manager','learner','facilitator','assessor','moderator','finance','employer'];
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Admin</div>
+            <h1>Users</h1>
+            <div class="meta">${users.length} users</div>
+          </div>
+          <div class="flex gap-12">
+            <button class="btn primary" id="addBtn">➕ Add user</button>
+          </div>
+        </div>
+        <div class="card pad-lg">
+          <table class="tbl">
+            <thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Payment</th><th>Last login</th><th></th></tr></thead>
+            <tbody>
+              ${users.map(u => `
+                <tr>
+                  <td><b>${NIBS.esc(u.full_name)}</b></td>
+                  <td>${NIBS.esc(u.email)}</td>
+                  <td><span class="pill">${u.role}</span></td>
+                  <td>${NIBS.statusPill(u.status)}</td>
+                  <td>${NIBS.statusPill(u.payment_status)}</td>
+                  <td>${NIBS.fmtDateTime(u.last_login)}</td>
+                  <td><button class="btn sm" data-act="status" data-id="${u.id}" data-status="active">Activate</button>
+                      <button class="btn sm" data-act="status" data-id="${u.id}" data-status="suspended">Suspend</button></td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      document.getElementById('addBtn').onclick = () => {
+        const f = `
+          <div class="form-row">
+            <div><label>Full name</label><input id="f_name" /></div>
+            <div><label>Email</label><input id="f_email" type="email" /></div>
+          </div>
+          <div class="form-row mt-8">
+            <div><label>Role</label><select id="f_role">${roleOpts.map(r => `<option>${r}</option>`).join('')}</select></div>
+            <div><label>Phone</label><input id="f_phone" /></div>
+          </div>
+          <div class="form-row mt-8">
+            <div><label>ID number</label><input id="f_id" /></div>
+            <div><label>Password (default ChangeMe123!)</label><input id="f_pwd" value="ChangeMe123!" /></div>
+          </div>
+        `;
+        const m = window.__modal || (window.__modal = (() => { const d = document.createElement('div'); d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:9999;'; document.body.appendChild(d); return d; })());
+        m.innerHTML = `<div class="card pad-lg" style="max-width: 520px; width: 92%;">
+          <h3>Add user</h3>
+          ${f}
+          <div class="flex gap-12 mt-16">
+            <button class="btn" onclick="document.querySelector('#m_close').click()">Cancel</button>
+            <button class="btn primary" id="m_save">Create</button>
+            <button class="btn ghost" id="m_close" style="display:none;">close</button>
+          </div>
+        </div>`;
+        m.querySelector('#m_save').onclick = async () => {
+          try {
+            const out = await NIBS.api('/api/users', { method: 'POST', body: {
+              full_name: m.querySelector('#f_name').value, email: m.querySelector('#f_email').value,
+              role: m.querySelector('#f_role').value, phone: m.querySelector('#f_phone').value,
+              id_number: m.querySelector('#f_id').value, password: m.querySelector('#f_pwd').value
+            } });
+            NIBS.toast('User created. Default password: ' + out.default_password, 'ok');
+            m.innerHTML = ''; setTimeout(() => location.reload(), 600);
+          } catch (e) { NIBS.toast('Failed: ' + e.message, 'err'); }
+        };
+        m.onclick = (e) => { if (e.target === m) m.innerHTML = ''; };
+      };
+
+      main.addEventListener('click', async (e) => {
+        const b = e.target.closest('button[data-act="status"]');
+        if (!b) return;
+        try {
+          await NIBS.api('/api/users/' + b.dataset.id + '/status', { method: 'POST', body: { status: b.dataset.status, payment_status: b.dataset.status } });
+          NIBS.toast('Status updated', 'ok');
+          setTimeout(() => location.reload(), 400);
+        } catch (err) { NIBS.toast('Failed: ' + err.message, 'err'); }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lesson — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <style>
+    .enriched-block { background: #fff; border-radius: 12px; padding: 20px 24px; margin: 16px 0; box-shadow: 0 1px 3px rgba(0,0,0,.05); border-left: 4px solid var(--brand, #4f46e5); }
+    .enriched-block h3 { margin: 0 0 8px 0; color: var(--brand, #4f46e5); font-size: 1.1rem; }
+    .enriched-block .block-body { white-space: pre-wrap; line-height: 1.7; }
+    .block-scenario { background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%); border-left-color: #f59e0b; }
+    .block-example { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%); border-left-color: #3b82f6; }
+    .block-activity { background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%); border-left-color: #10b981; }
+    .block-references { background: #f9fafb; border-left-color: #6b7280; }
+    .block-references .ref { padding: 8px 0; border-bottom: 1px solid #e5e7eb; font-size: 0.9rem; }
+    .block-references .ref:last-child { border-bottom: 0; }
+    .block-references .ref a { color: var(--brand, #4f46e5); }
+    .quiz-q { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; margin: 8px 0; }
+    .quiz-q .options { margin-top: 8px; }
+    .quiz-q label { display: block; padding: 6px 0; cursor: pointer; }
+    .quiz-q .result { margin-top: 8px; font-weight: 600; }
+    .quiz-q .result.correct { color: #10b981; }
+    .quiz-q .result.wrong { color: #ef4444; }
+    .review-pill { display: inline-block; padding: 4px 10px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; background: #fef3c7; color: #92400e; }
+    .review-pill.published { background: #d1fae5; color: #065f46; }
+    .review-pill.approved { background: #dbeafe; color: #1e40af; }
+    .review-pill.draft_ai { background: #fef3c7; color: #92400e; }
+    .review-pill.needs_sme_review { background: #fed7aa; color: #9a3412; }
+    .review-pill.reviewed { background: #e0e7ff; color: #3730a3; }
+    .up-to-date { background: #fee2e2; color: #991b1b; padding: 8px 12px; border-radius: 8px; font-size: 0.85rem; margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    const lessonId = location.pathname.split('/').pop();
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/app/pathway'));
+      try {
+        const d = await NIBS.api('/api/lessons/' + lessonId);
+        await render(d, me);
+      } catch (e) {
+        document.getElementById('main').innerHTML = `<p class="muted">Could not load lesson: ${e.message}</p>`;
+      }
+    })();
+
+    function reviewPill(status) {
+      const labels = { draft_ai: 'Draft AI', needs_sme_review: 'Needs SME review', reviewed: 'Reviewed', approved: 'Approved', published: 'Published', archived: 'Archived' };
+      return `<span class="review-pill ${status}">${labels[status] || status}</span>`;
+    }
+
+    function block(title, body, klass='') {
+      if (!body) return '';
+      return `<div class="enriched-block ${klass}"><h3>${title}</h3><div class="block-body">${NIBS.esc(body)}</div></div>`;
+    }
+
+    function renderQuiz(quiz) {
+      if (!quiz || !quiz.length) return '';
+      return `<div class="enriched-block"><h3>📝 Knowledge check</h3>${quiz.map((q, i) => `
+        <div class="quiz-q" data-i="${i}">
+          <strong>Q${i+1}.</strong> ${NIBS.esc(q.q)}
+          <div class="options">${q.options.map((o, j) => `
+            <label><input type="radio" name="q${i}" value="${j}"> ${NIBS.esc(o)}</label>
+          `).join('')}</div>
+          <div class="result" style="display:none"></div>
+        </div>
+      `).join('')}
+        <button class="btn primary mt-8" id="checkQuizBtn">Check answers</button>
+      </div>`;
+    }
+
+    function renderWorkbook(qs) {
+      if (!qs || !qs.length) return '';
+      return `<div class="enriched-block"><h3>📓 Workbook questions</h3>${qs.map((q, i) => `
+        <div style="margin: 12px 0;">
+          <strong>${i+1}.</strong> ${NIBS.esc(q.prompt)}
+          <p class="muted small">${NIBS.esc(q.helper || '')}</p>
+          <textarea placeholder="Type your answer here..." style="width:100%;min-height:80px"></textarea>
+        </div>
+      `).join('')}</div>`;
+    }
+
+    function renderReferences(refs) {
+      if (!refs || !refs.length) return '';
+      return `<div class="enriched-block block-references"><h3>📚 References & further reading</h3>${refs.map(r => `
+        <div class="ref">
+          <strong>${NIBS.esc(r.name)}</strong>
+          ${r.url ? `<a href="${NIBS.esc(r.url)}" target="_blank" rel="noopener">${NIBS.esc(r.url)}</a>` : ''}
+          <div class="muted small">Supports: ${NIBS.esc(r.supports || '—')} • Accessed: ${NIBS.esc(r.date || '—')}</div>
+        </div>
+      `).join('')}</div>`;
+    }
+
+    function renderPOE(poe) {
+      if (!poe) return '';
+      return `<div class="enriched-block"><h3>📁 POE evidence link</h3><p>${NIBS.esc(poe)}</p><a class="btn" href="/app/poe">Open POE →</a></div>`;
+    }
+
+    function renderChecklist(title, body, klass='') {
+      if (!body) return '';
+      return `<div class="enriched-block ${klass}"><h3>${title}</h3><div class="block-body">${NIBS.esc(body).replace(/\n/g, '<br>')}</div></div>`;
+    }
+
+    async function render(d, me) {
+      const l = d.lesson;
+      const main = document.getElementById('main');
+
+      // Try to fetch enriched content using curriculum_element_id from the lesson.
+      // If the lesson's CE is a module (no content yet), look up the first topic
+      // under that module and fetch its enriched content.
+      let enriched = null;
+      let contentCE = l.curriculum_element_id;
+      try {
+        enriched = await NIBS.api('/api/lessons/topic-content/' + contentCE);
+      } catch (e) {
+        enriched = null;
+      }
+      if (!enriched && l.curriculum_element_id) {
+        // Try the first topic under this module
+        try {
+          const tree = await NIBS.api('/api/curriculum/elements/' + l.curriculum_element_id);
+          if (tree && tree.element && tree.element.type === 'knowledge_module') {
+            // Find topics
+            const kids = await NIBS.api('/api/curriculum/elements?parent_id=' + l.curriculum_element_id);
+            const topics = (kids.elements || []).filter(e => e.type === 'topic');
+            if (topics.length) {
+              contentCE = topics[0].id;
+              try {
+                enriched = await NIBS.api('/api/lessons/topic-content/' + contentCE);
+              } catch (e2) { enriched = null; }
+            }
+          }
+        } catch (e) { /* swallow */ }
+      }
+
+      const isStaff = ['superadmin','admin','coursemanager','facilitator','assessor','moderator'].includes(me.role);
+
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs"><a href="/app/pathway">Pathway</a> &raquo; Lesson</div>
+            <h1>${NIBS.esc(l.title)}</h1>
+            <div class="meta">${NIBS.esc(l.summary || '')}</div>
+            ${enriched ? `<div class="mt-8">${reviewPill(enriched.review_status)}</div>` : ''}
+          </div>
+          <div class="flex gap-12">
+            <button class="btn" id="saveBtn">💾 Save progress</button>
+            <button class="btn primary" id="doneBtn">✓ Mark complete</button>
+          </div>
+        </div>
+
+        ${enriched ? `
+          <div class="demo-banner" style="background:#fef3c7;color:#92400e;">⚠ This lesson includes AI-generated enrichment ("${enriched.review_status}"). The official curriculum document is the source of truth.</div>
+          ${enriched.up_to_date_note ? `<div class="up-to-date">⏰ ${NIBS.esc(enriched.up_to_date_note)}</div>` : ''}
+
+          <div class="stepper">
+            <div class="st active">1. Why it matters</div>
+            <div class="st">2. Plain English</div>
+            <div class="st">3. SA Example</div>
+            <div class="st">4. Scenario</div>
+            <div class="st">5. Step-by-step</div>
+            <div class="st">6. Do</div>
+            <div class="st">7. Quiz</div>
+            <div class="st">8. POE</div>
+          </div>
+
+          <div id="enriched-blocks">
+            ${block('💡 Why this matters in the workplace', enriched.why_it_matters)}
+            ${block('📖 Plain English explanation', enriched.plain_english)}
+            ${block('🇿🇦 South African workplace example', enriched.sa_example, 'block-example')}
+            ${block('🗣 Real-life scenario', enriched.scenario, 'block-scenario')}
+            ${block('🪜 Step-by-step guidance', enriched.step_by_step)}
+            ${block('⚠ Common mistakes to avoid', enriched.common_mistakes)}
+            ${block('🛠 Learn-by-doing activity', enriched.learn_by_doing, 'block-activity')}
+            ${renderWorkbook(enriched.workbook_questions)}
+            ${renderQuiz(enriched.quiz)}
+            ${renderPOE(enriched.poe_link)}
+            ${renderChecklist('✅ Assessor checklist', enriched.assessor_checklist)}
+            ${renderChecklist('🛡 Moderator checklist', enriched.moderator_checklist)}
+            ${renderReferences(enriched.references)}
+            ${isStaff ? `<div class="enriched-block" style="border-left-color: #6366f1;"><h3>🛠 Staff only</h3><p>As a ${NIBS.esc(me.role)}, you can review and approve this content.</p><a class="btn" href="/admin/content-review?element=${l.curriculum_element_id}">Open content review →</a></div>` : ''}
+          </div>
+        ` : `
+          <div class="demo-banner">⚠ This lesson does not yet have AI-enriched content. The official curriculum document is the source of truth. View the basic lesson content below.</div>
+          <div class="grid-2">
+            <div class="card pad-lg">
+              <h3>📖 Reading content</h3>
+              <div>${l.content || '<p>No content yet.</p>'}</div>
+            </div>
+            <div class="card pad-lg">
+              <h3>📺 Video & visuals</h3>
+              ${l.video_url ? `<iframe src="${l.video_url}" style="width:100%;aspect-ratio:16/9;border:0;"></iframe>` : `<p class="muted small">No video yet</p>`}
+            </div>
+          </div>
+        `}
+
+        <div class="card pad-lg mt-24">
+          <h3>💬 Reflection</h3>
+          <p class="muted small">Your facilitator will leave feedback on this lesson and the linked workbook/POE items.</p>
+          <textarea placeholder="Optional reflection or question for your facilitator..." id="reflection"></textarea>
+          <div class="flex gap-12 mt-8"><button class="btn primary" id="saveRefl">Save reflection</button></div>
+        </div>
+
+        <div class="card pad-lg mt-24">
+          <h3>📊 Status</h3>
+          <p>Current status: ${NIBS.statusPill(d.progress?.status || 'not_started')}</p>
+          <p class="small muted">Last updated: ${NIBS.fmtDateTime(d.progress?.updated_at)}</p>
+        </div>
+      `;
+
+      // Quiz logic
+      const checkBtn = document.getElementById('checkQuizBtn');
+      if (checkBtn && enriched && enriched.quiz) {
+        checkBtn.onclick = () => {
+          enriched.quiz.forEach((q, i) => {
+            const qd = document.querySelector(`.quiz-q[data-i="${i}"]`);
+            if (!qd) return;
+            const sel = qd.querySelector('input:checked');
+            const result = qd.querySelector('.result');
+            result.style.display = 'block';
+            if (sel && parseInt(sel.value) === q.answer) {
+              result.className = 'result correct';
+              result.textContent = '✓ Correct!';
+            } else {
+              result.className = 'result wrong';
+              result.textContent = '✗ Try again. Correct answer: ' + q.options[q.answer];
+            }
+          });
+        };
+      }
+
+      async function mark(status) {
+        try {
+          await NIBS.api('/api/lessons/' + lessonId + '/progress', { method: 'POST', body: { status, last_position: 100 } });
+          NIBS.toast('Progress saved', 'ok');
+        } catch (e) { NIBS.toast('Save failed: ' + e.message, 'err'); }
+      }
+      document.getElementById('saveBtn').onclick = () => mark('in_progress');
+      document.getElementById('doneBtn').onclick = () => mark('completed');
+      document.getElementById('saveRefl').onclick = () => NIBS.toast('Reflection saved (locally)', 'ok');
+    }
+  </script>
+</body>
+</html>

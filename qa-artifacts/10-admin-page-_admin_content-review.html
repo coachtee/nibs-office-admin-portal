@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Content Review — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <style>
+    .review-grid { display: grid; grid-template-columns: 320px 1fr; gap: 16px; }
+    .review-list { max-height: calc(100vh - 200px); overflow-y: auto; }
+    .review-item { padding: 10px 14px; border-radius: 8px; margin: 4px 0; cursor: pointer; border: 1px solid transparent; }
+    .review-item:hover { background: #f3f4f6; }
+    .review-item.active { background: #eef2ff; border-color: var(--brand, #4f46e5); }
+    .review-item .title { font-weight: 600; font-size: 0.95rem; }
+    .review-item .code { font-size: 0.75rem; color: #6b7280; }
+    .review-pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .review-pill.draft_ai { background: #fef3c7; color: #92400e; }
+    .review-pill.needs_sme_review { background: #fed7aa; color: #9a3412; }
+    .review-pill.reviewed { background: #e0e7ff; color: #3730a3; }
+    .review-pill.approved { background: #dbeafe; color: #1e40af; }
+    .review-pill.published { background: #d1fae5; color: #065f46; }
+    .review-pill.archived { background: #e5e7eb; color: #374151; }
+    .curriculum-side { background: #f9fafb; border-radius: 12px; padding: 16px; }
+    .ai-side { background: #fff; border-radius: 12px; padding: 16px; }
+    .block { background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; margin: 8px 0; }
+    .block h4 { margin: 0 0 6px 0; font-size: 0.9rem; color: var(--brand, #4f46e5); }
+    .block .body { white-space: pre-wrap; font-size: 0.9rem; line-height: 1.6; }
+    .ref { padding: 8px; background: #f9fafb; border-radius: 6px; margin: 4px 0; font-size: 0.85rem; }
+    .actions { display: flex; gap: 8px; margin-top: 16px; }
+    .actions .btn { flex: 1; }
+    textarea.notes { width: 100%; min-height: 60px; margin-top: 8px; padding: 8px; border-radius: 6px; border: 1px solid #d1d5db; }
+    .filter-row { display: flex; gap: 8px; margin: 12px 0; align-items: center; }
+    .filter-row select, .filter-row input { padding: 6px 10px; border-radius: 6px; border: 1px solid #d1d5db; }
+  </style>
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      if (!['superadmin','admin','coursemanager','facilitator'].includes(me.role)) {
+        document.getElementById('main').innerHTML = `<p class="muted">Staff only.</p>`;
+        return;
+      }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/admin/dashboard'));
+      const main = document.getElementById('main');
+
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Admin &raquo; Content Review</div>
+            <h1>Content Review</h1>
+            <div class="meta">AI-enriched learner content for all 36 modules — review and approve before learner publication.</div>
+          </div>
+        </div>
+
+        <div class="filter-row">
+          <label>Status:
+            <select id="statusFilter">
+              <option value="">All</option>
+              <option value="draft_ai">Draft AI</option>
+              <option value="needs_sme_review">Needs SME review</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="approved">Approved</option>
+              <option value="published">Published</option>
+            </select>
+          </label>
+          <label>Type:
+            <select id="typeFilter">
+              <option value="">All</option>
+              <option value="topic">Topic (KM)</option>
+              <option value="practical_activity">Practical Activity (PM)</option>
+              <option value="work_experience_item">Work Experience Item (WM)</option>
+            </select>
+          </label>
+          <input type="text" id="search" placeholder="Search by code or title..." style="flex: 1;" />
+          <span class="muted small" id="count"></span>
+        </div>
+
+        <div class="review-grid">
+          <div class="review-list" id="reviewList"><p class="muted">Loading...</p></div>
+          <div id="reviewDetail"><p class="muted">Select an item to review.</p></div>
+        </div>
+      `;
+
+      let allItems = [];
+      try {
+        const d = await NIBS.api('/api/lessons/topic-content');
+        allItems = d.items || [];
+      } catch (e) {
+        document.getElementById('reviewList').innerHTML = `<p class="muted">Could not load: ${e.message}</p>`;
+        return;
+      }
+
+      function applyFilters() {
+        const s = document.getElementById('statusFilter').value;
+        const t = document.getElementById('typeFilter').value;
+        const q = document.getElementById('search').value.toLowerCase();
+        const filtered = allItems.filter(i =>
+          (!s || i.review_status === s) &&
+          (!t || i.type === t) &&
+          (!q || (i.code + ' ' + i.title).toLowerCase().includes(q))
+        );
+        renderList(filtered);
+        document.getElementById('count').textContent = `${filtered.length} of ${allItems.length} items`;
+      }
+
+      function statusPill(s) {
+        return `<span class="review-pill ${s}">${(s || '—').replace(/_/g, ' ')}</span>`;
+      }
+
+      function renderList(items) {
+        const html = items.length
+          ? items.map(i => `<div class="review-item" data-id="${i.id}" data-element="${i.curriculum_element_id}">
+              <div class="code">${NIBS.esc(i.code || '')} • ${NIBS.esc(i.type || '')}</div>
+              <div class="title">${NIBS.esc(i.title || '')}</div>
+              <div class="mt-4">${statusPill(i.review_status)}</div>
+            </div>`).join('')
+          : '<p class="muted">No items match your filter.</p>';
+        document.getElementById('reviewList').innerHTML = html;
+        document.querySelectorAll('.review-item').forEach(el => {
+          el.onclick = () => {
+            document.querySelectorAll('.review-item').forEach(x => x.classList.remove('active'));
+            el.classList.add('active');
+            loadDetail(el.dataset.id, el.dataset.element);
+          };
+        });
+        // Auto-select from query
+        const target = new URL(location.href).searchParams.get('element');
+        if (target) {
+          const found = document.querySelector(`.review-item[data-element="${target}"]`);
+          if (found) found.click();
+        }
+      }
+
+      async function loadDetail(id, elementId) {
+        document.getElementById('reviewDetail').innerHTML = '<p class="muted">Loading...</p>';
+        try {
+          const [c, cur] = await Promise.all([
+            NIBS.api('/api/lessons/topic-content/' + elementId),
+            NIBS.api('/api/curriculum/elements/' + elementId),
+          ]);
+          renderDetail(c, cur.element);
+        } catch (e) {
+          document.getElementById('reviewDetail').innerHTML = `<p class="muted">Error: ${e.message}</p>`;
+        }
+      }
+
+      function block(title, body) {
+        if (!body) return '';
+        return `<div class="block"><h4>${title}</h4><div class="body">${NIBS.esc(body)}</div></div>`;
+      }
+      function listBlock(title, items, renderItem) {
+        if (!items || !items.length) return '';
+        return `<div class="block"><h4>${title}</h4>${items.map(renderItem).join('')}</div>`;
+      }
+
+      function renderDetail(c, element) {
+        const refs = (() => { try { return JSON.parse(c.references || '[]'); } catch { return []; } })();
+        const wbq = (() => { try { return JSON.parse(c.workbook_questions_json || '[]'); } catch { return []; } })();
+        const quiz = (() => { try { return JSON.parse(c.quiz_json || '[]'); } catch { return []; } })();
+        document.getElementById('reviewDetail').innerHTML = `
+          <h2>${NIBS.esc(element.title || '—')}</h2>
+          <div class="muted small">${NIBS.esc(element.code)} • ${NIBS.esc(element.type)} • Status: ${statusPill(c.review_status)}</div>
+
+          <div class="curriculum-side mt-16">
+            <h3>📜 Official curriculum element</h3>
+            <p><strong>Code:</strong> ${NIBS.esc(element.code || '—')}</p>
+            <p><strong>Title:</strong> ${NIBS.esc(element.title || '—')}</p>
+            <p><strong>Type:</strong> ${NIBS.esc(element.type || '—')}</p>
+            <p><strong>Description:</strong> ${NIBS.esc(element.description || '—')}</p>
+            <p><strong>Body (official):</strong></p>
+            <pre style="white-space:pre-wrap;background:#fff;padding:12px;border-radius:6px;border:1px solid #e5e7eb;font-size:0.85rem;">${NIBS.esc(element.body || 'No official body text.')}</pre>
+          </div>
+
+          <div class="ai-side mt-16">
+            <h3>🤖 AI-enriched content</h3>
+            ${block('💡 Why it matters', c.why_it_matters)}
+            ${block('📖 Plain English', c.plain_english)}
+            ${block('🇿🇦 SA Example', c.sa_example)}
+            ${block('🗣 Scenario', c.scenario)}
+            ${block('🪜 Step-by-step', c.step_by_step)}
+            ${block('⚠ Common mistakes', c.common_mistakes)}
+            ${block('🛠 Learn-by-doing', c.learn_by_doing)}
+            ${listBlock('📓 Workbook questions', wbq, (q, i) => `<div class="ref"><strong>${i+1}.</strong> ${NIBS.esc(q.prompt || '')}<div class="muted small">${NIBS.esc(q.helper || '')}</div></div>`)}
+            ${listBlock('📝 Quiz', quiz, (q, i) => `<div class="ref"><strong>Q${i+1}.</strong> ${NIBS.esc(q.q)}<br><em class="muted small">Answer: ${NIBS.esc(q.options ? q.options[q.answer] : '?')}</em></div>`)}
+            ${block('📁 POE link', c.poe_link)}
+            ${block('✅ Assessor checklist', c.assessor_checklist)}
+            ${block('🛡 Moderator checklist', c.moderator_checklist)}
+            ${c.up_to_date_note ? `<div class="block" style="background:#fee2e2;border-color:#fca5a5;"><h4>⏰ Up-to-date note</h4><div>${NIBS.esc(c.up_to_date_note)}</div></div>` : ''}
+            ${listBlock('📚 References', refs, r => `<div class="ref"><strong>${NIBS.esc(r.name || '')}</strong><br>${r.url ? `<a href="${NIBS.esc(r.url)}" target="_blank">${NIBS.esc(r.url)}</a><br>` : ''}<em class="muted small">Supports: ${NIBS.esc(r.supports || '—')} • Accessed: ${NIBS.esc(r.date || '—')}</em></div>`)}
+          </div>
+
+          <div class="actions">
+            <button class="btn" data-action="needs_sme_review">🚩 Needs SME review</button>
+            <button class="btn" data-action="reviewed">👁 Reviewed</button>
+            <button class="btn primary" data-action="approved">✅ Approve</button>
+            <button class="btn" data-action="published" style="background:#10b981;color:#fff;">🚀 Publish to learners</button>
+            <button class="btn" data-action="archived">🗄 Archive</button>
+          </div>
+
+          <textarea class="notes" id="reviewerNotes" placeholder="Notes for the next reviewer (optional)..."></textarea>
+        `;
+
+        document.querySelectorAll('.actions .btn').forEach(btn => {
+          btn.onclick = async () => {
+            const status = btn.dataset.action;
+            const notes = document.getElementById('reviewerNotes').value;
+            try {
+              await NIBS.api('/api/lessons/topic-content/' + c.id, { method: 'PATCH', body: { review_status: status, notes } });
+              NIBS.toast('Saved: ' + status, 'ok');
+              // Update local state
+              const item = allItems.find(x => x.id === c.id);
+              if (item) item.review_status = status;
+              applyFilters();
+            } catch (e) { NIBS.toast('Save failed: ' + e.message, 'err'); }
+          };
+        });
+      }
+
+      document.getElementById('statusFilter').onchange = applyFilters;
+      document.getElementById('typeFilter').onchange = applyFilters;
+      document.getElementById('search').oninput = applyFilters;
+      applyFilters();
+    })();
+  </script>
+</body>
+</html>

@@ -22,6 +22,7 @@ function reset() {
     'workbook_versions','workbook_answers','workbook_questions',
     'lesson_progress','enrolments','resources','lessons','modules',
     'curriculum_mappings','curriculum_elements','curriculum_sections','curriculum_documents',
+    'topic_content',
     'courses','cohorts','payments','users'
   ];
   for (const t of tables) {
