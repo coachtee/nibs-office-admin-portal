@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>UAT-CHECKLIST</title>
+  <style>
+    html {
+      line-height: 1.5;
+      font-family: Georgia, serif;
+      font-size: 20px;
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 1em;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, 'Lucida Console', Consolas, monospace;
+      font-size: 85%;
+      margin: 0;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+  </style>
+</head>
+<body>
+<h1
+id="uat-go-live-checklist-nibs-office-administrator-pathway-portal">UAT
+Go-Live Checklist — NIBS Office Administrator Pathway Portal</h1>
+<p><strong>Target:</strong> <code>https://uat-office.naleli.co.za</code>
+<strong>Stack:</strong> Portainer + Nginx Proxy Manager
+<strong>Container port:</strong> 8088 <strong>Status:</strong> UAT
+go-live approved; production wait until UAT sign-off</p>
+<hr />
+<h2 id="pre-flight-completed-before-this-checklist">0. Pre-flight
+(completed before this checklist)</h2>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" checked="" />
+Official QCTO 334102002 curriculum pre-seeded (15 KMs + 11 PMs + 10 WMs
+= 36 modules, 445 credits)</li>
+<li><input type="checkbox" disabled="" checked="" />
+AI-enriched content for 294 curriculum elements (Draft AI → SME review
+workflow)</li>
+<li><input type="checkbox" disabled="" checked="" />
+9 role-based portals (Super Admin, Admin, Course Manager, Learner,
+Facilitator, Assessor, Moderator, Finance, Workplace Supervisor)</li>
+<li><input type="checkbox" disabled="" checked="" />
+Netflix-style learner dashboard with practical learning items</li>
+<li><input type="checkbox" disabled="" checked="" />
+Online POE editor with supervisor signoff + 11-page PDF pack</li>
+<li><input type="checkbox" disabled="" checked="" />
+73/73 smoke test PASS</li>
+<li><input type="checkbox" disabled="" checked="" />
+GitHub branches <code>main</code> and <code>develop</code> pushed</li>
+<li><input type="checkbox" disabled="" checked="" />
+GitHub SSH deploy key added (read/write) by <code>@coachtee</code></li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>Dockerfile</code> + <code>docker-compose.yml</code> ready for
+Portainer (port 8088, <code>/data</code> volume,
+<code>restart: unless-stopped</code>)</li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>.env.example</code> with all required env vars</li>
+<li><input type="checkbox" disabled="" checked="" />
+<code>must_change_password</code> gate — admin is forced to rotate off
+the seed default on first login</li>
+</ul>
+<hr />
+<h2 id="environment-variables-portainer-stack-env-file">1. Environment
+variables (Portainer stack env file)</h2>
+<p>In Portainer, name the env file <code>office-admin-portal.env</code>
+and set:</p>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Variable</th>
+<th>Value</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>APP_ENV</code></td>
+<td><code>uat</code></td>
+<td><code>development</code> | <code>uat</code> |
+<code>production</code></td>
+</tr>
+<tr class="even">
+<td><code>APP_URL</code></td>
+<td><code>https://uat-office.naleli.co.za</code></td>
+<td>Used in email links, redirects</td>
+</tr>
+<tr class="odd">
+<td><code>APP_PORT</code></td>
+<td><code>8088</code></td>
+<td>Internal container port</td>
+</tr>
+<tr class="even">
+<td><code>DATABASE_URL</code></td>
+<td><em>(leave blank for SQLite)</em></td>
+<td>Or <code>postgres://...</code> for future</td>
+</tr>
+<tr class="odd">
+<td><code>SQLITE_PATH</code></td>
+<td><code>/data/nibs.db</code></td>
+<td>Persistent on host <code>./data</code></td>
+</tr>
+<tr class="even">
+<td><code>JWT_SECRET</code></td>
+<td><code>&lt;32+ random chars&gt;</code></td>
+<td><strong>Rotate before production</strong></td>
+</tr>
+<tr class="odd">
+<td><code>SESSION_SECRET</code></td>
+<td><code>&lt;32+ random chars&gt;</code></td>
+<td><strong>Rotate before production</strong></td>
+</tr>
+<tr class="even">
+<td><code>UPLOAD_DIR</code></td>
+<td><code>/data/uploads</code></td>
+<td>POE evidence files</td>
+</tr>
+<tr class="odd">
+<td><code>PDF_EXPORT_DIR</code></td>
+<td><code>/data/uploads/exports</code></td>
+<td>Generated POE PDFs</td>
+</tr>
+<tr class="even">
+<td><code>ADMIN_EMAIL</code></td>
+<td><code>admin@naleli.co.za</code></td>
+<td>First-run admin</td>
+</tr>
+<tr class="odd">
+<td><code>ADMIN_DEFAULT_PASSWORD</code></td>
+<td><code>change-on-first-login</code></td>
+<td>Forces rotation on first login</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>NEVER commit <code>.env</code> or
+<code>office-admin-portal.env</code> to git.</strong> Only
+<code>.env.example</code>.</p>
+</blockquote>
+<hr />
+<h2 id="persistent-volumes">2. Persistent volumes</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Container path</th>
+<th>Host path</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>/data</code></td>
+<td><code>./data</code></td>
+<td>SQLite DB + uploads + exports</td>
+</tr>
+<tr class="even">
+<td><code>/data/uploads</code></td>
+<td><code>./uploads</code></td>
+<td>POE evidence files</td>
+</tr>
+<tr class="odd">
+<td><code>/data/uploads/exports</code></td>
+<td><code>./exports</code></td>
+<td>Generated PDFs</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>All three bind mounts are declared in
+<code>docker-compose.yml</code>. Data survives any container rebuild as
+long as <code>./data</code> on the host is intact.</p>
+</blockquote>
+<p><strong>Verification:</strong> after the first deploy, drop a test
+file in <code>./uploads</code>, restart the container, confirm the file
+is still there.</p>
+<hr />
+<h2 id="first-admin-password-change-do-this-in-uat">3. First admin
+password change (do this in UAT)</h2>
+<ol type="1">
+<li>Browse to <code>https://uat-office.naleli.co.za/login</code></li>
+<li>Sign in with <code>admin@naleli.co.za</code> /
+<code>change-on-first-login</code></li>
+<li>The system <strong>forces</strong> a password change before any
+other action works</li>
+<li>Set a strong password (≥ 8 chars, mix case + digit)</li>
+<li>Optionally, create your own named admin account and disable the
+default</li>
+</ol>
+<blockquote>
+<p>Other seeded accounts (superadmin, coursemanager, learner, etc.) are
+NOT forced to change. They keep their legacy <code>ChangeMe123!</code> /
+<code>Student123!</code> defaults — <strong>rotate these or disable them
+in production</strong>.</p>
+</blockquote>
+<hr />
+<h2 id="nginx-proxy-manager-proxy-host">4. Nginx Proxy Manager proxy
+host</h2>
+<table>
+<thead>
+<tr class="header">
+<th>Field</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Domain</td>
+<td><code>uat-office.naleli.co.za</code></td>
+</tr>
+<tr class="even">
+<td>Scheme</td>
+<td><code>http</code></td>
+</tr>
+<tr class="odd">
+<td>Forward host</td>
+<td><code>office-admin-portal</code> (or the Portainer service IP)</td>
+</tr>
+<tr class="even">
+<td>Forward port</td>
+<td><code>8088</code></td>
+</tr>
+<tr class="odd">
+<td>Cache assets</td>
+<td>off</td>
+</tr>
+<tr class="even">
+<td>Block common exploits</td>
+<td><strong>on</strong></td>
+</tr>
+<tr class="odd">
+<td>Websockets</td>
+<td><strong>on</strong> (future-proof)</td>
+</tr>
+<tr class="even">
+<td>SSL</td>
+<td>Let’s Encrypt (Force SSL = on, HTTP/2 = on)</td>
+</tr>
+<tr class="odd">
+<td>Advanced</td>
+<td>add <code>proxy_read_timeout 300;</code> (handles PDF
+generation)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="backup-plan-before-declaring-uat-go-live">5. Backup plan (before
+declaring UAT go-live)</h2>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>What</th>
+<th>How</th>
+<th>Where</th>
+<th>Test restore</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>SQLite DB</td>
+<td><code>cp /data/nibs.db /backups/nibs-$(date +%F).db</code>
+daily</td>
+<td>Off-host (object storage / NAS)</td>
+<td>Restore to a fresh container once</td>
+</tr>
+<tr class="even">
+<td>Uploads</td>
+<td>rsync <code>/data/uploads</code> to off-host daily</td>
+<td>Same</td>
+<td>Spot-check file integrity</td>
+</tr>
+<tr class="odd">
+<td>Exports</td>
+<td>rsync <code>/data/uploads/exports</code> weekly</td>
+<td>Same</td>
+<td>Spot-check</td>
+</tr>
+<tr class="even">
+<td>Config</td>
+<td>Portainer stack JSON + env file in a private git repo</td>
+<td>GitHub / Gitea</td>
+<td>Re-create stack from a fresh Portainer</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p><strong>No backup = no go-live.</strong> Test a full restore before
+UAT is declared done.</p>
+</blockquote>
+<hr />
+<h2 id="uat-test-accounts">6. UAT test accounts</h2>
+<p>Pre-seeded (re-seed if needed):</p>
+<table>
+<colgroup>
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+<col style="width: 25%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Role</th>
+<th>Email</th>
+<th>Default password</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Super Admin</td>
+<td><code>superadmin@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+<td>Full access — rotate in production</td>
+</tr>
+<tr class="even">
+<td>Admin</td>
+<td><code>admin@naleli.co.za</code></td>
+<td><code>change-on-first-login</code></td>
+<td>Forced rotation on first login</td>
+</tr>
+<tr class="odd">
+<td>Course Manager</td>
+<td><code>coursemanager@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+<td>Curriculum / modules / lessons / POE templates</td>
+</tr>
+<tr class="even">
+<td>Facilitator</td>
+<td><code>facilitator@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+<td>Cohort + feedback</td>
+</tr>
+<tr class="odd">
+<td>Assessor</td>
+<td><code>assessor@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+<td>Competence decision</td>
+</tr>
+<tr class="even">
+<td>Moderator</td>
+<td><code>moderator@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+<td>Sample moderation</td>
+</tr>
+<tr class="odd">
+<td>Finance</td>
+<td><code>finance@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+<td>Payments + access</td>
+</tr>
+<tr class="even">
+<td>Workplace Supervisor</td>
+<td><code>supervisor@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+<td>Workplace sign-off</td>
+</tr>
+<tr class="odd">
+<td>Learner (active)</td>
+<td><code>student@naleli.co.za</code></td>
+<td><code>Student123!</code></td>
+<td>Test learner 1</td>
+</tr>
+<tr class="even">
+<td>Learner (active)</td>
+<td><code>learner2@naleli.co.za</code></td>
+<td><code>Student123!</code></td>
+<td>Test learner 2</td>
+</tr>
+<tr class="odd">
+<td>Learner (pending payment)</td>
+<td><code>pending@naleli.co.za</code></td>
+<td><code>Student123!</code></td>
+<td>Should see payment-lock screen</td>
+</tr>
+</tbody>
+</table>
+<blockquote>
+<p>For real UAT, <strong>create one test user per role</strong> and let
+real humans click through. Use the pre-seeded accounts only for smoke
+testing.</p>
+</blockquote>
+<hr />
+<h2 id="content-review-status-verify-every-lesson-shows-the-banner">7.
+Content review status — verify every lesson shows the banner</h2>
+<p>Each lesson that has AI-enriched content shows a banner:</p>
+<blockquote>
+<p>⚠ This lesson includes AI-generated enrichment (“draft_ai” /
+“needs_sme_review” / “reviewed” / “approved” / “published”). The
+official curriculum document is the source of truth.</p>
+</blockquote>
+<p><strong>Workflow for SME review:</strong></p>
+<ol type="1">
+<li>Login as admin / coursemanager / facilitator</li>
+<li>Go to <code>/admin/content-review</code></li>
+<li>Filter by status (e.g. <code>draft_ai</code>)</li>
+<li>Open each item, read the AI content side-by-side with the official
+curriculum element</li>
+<li>Move it through the lifecycle: <code>draft_ai</code> →
+<code>needs_sme_review</code> → <code>reviewed</code> →
+<code>approved</code> → <code>published</code> (last step makes it
+visible to learners)</li>
+<li><strong>Never</strong> publish anything that has not been
+SME-reviewed</li>
+<li>References must be checked against the live URL before
+publishing</li>
+</ol>
+<p><strong>Block rule:</strong> learners only see <code>approved</code>
+or <code>published</code> content. Drafts are staff-only.</p>
+<hr />
+<h2 id="smoke-test-run-after-every-uat-deploy">8. Smoke test (run after
+every UAT deploy)</h2>
+<p>On the Portainer host, or any machine that can reach the
+container:</p>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode bash"><code class="sourceCode bash"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Locally:</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="bu">cd</span> /workspace/nibs-portal</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="va">BASE</span><span class="op">=</span>http://uat-office.naleli.co.za <span class="fu">bash</span> docs/smoke.sh</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Expected: PASS: 73    FAIL: 0</span></span></code></pre></div>
+<p>The smoke test covers: public landing, login flows, learner
+dashboard, workbook, POE editor, facilitator / assessor / moderator /
+finance / supervisor flows, curriculum mapping, audit, all 9 role
+dashboards.</p>
+<hr />
+<h2 id="uat-sign-off-criteria">9. UAT sign-off criteria</h2>
+<p>UAT is <strong>declared done</strong> when:</p>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" />
+All 73 smoke tests pass on the live URL</li>
+<li><input type="checkbox" disabled="" />
+Login works for all 11 pre-seeded accounts</li>
+<li><input type="checkbox" disabled="" />
+Admin is forced to change password on first login</li>
+<li><input type="checkbox" disabled="" />
+The 11-page POE PDF generates for a learner with at least 1 POE item
+submitted</li>
+<li><input type="checkbox" disabled="" />
+At least one AI-enriched lesson has been SME-reviewed and published</li>
+<li><input type="checkbox" disabled="" />
+Backup has run at least once AND a restore has been tested</li>
+<li><input type="checkbox" disabled="" />
+Nginx Proxy Manager forces HTTPS, returns a valid Let’s Encrypt
+cert</li>
+<li><input type="checkbox" disabled="" />
+No errors in container logs
+(<code>docker logs office-admin-portal | tail -100</code>)</li>
+<li><input type="checkbox" disabled="" />
+At least 3 humans (admin / facilitator / learner) have clicked through
+their main flow and signed off</li>
+</ul>
+<hr />
+<h2 id="known-issues-things-to-do-after-uat">10. Known issues / things
+to do AFTER UAT</h2>
+<ul>
+<li><strong>Production is NOT yet approved.</strong> UAT sign-off is
+required first.</li>
+<li>Replace the <code>ChangeMe123!</code> and <code>Student123!</code>
+legacy defaults on all non-admin seeded accounts (or delete them in
+production).</li>
+<li>Wire up a real payment provider (PayFast / Paystack / Yoco) — the
+portal currently uses a manual <code>pending_payment</code> flag with
+finance approval.</li>
+<li>Wire up SMTP for the application confirmation email and password
+reset.</li>
+<li>Switch from SQLite to PostgreSQL when learner numbers justify it
+(the schema is portable; the driver is not yet).</li>
+<li>Wire up the official learner guide / workbook PDF as the source of
+truth for lesson content (the admin curriculum page supports this via
+PDF upload + <code>pdftotext</code> extraction).</li>
+</ul>
+<hr />
+<h2 id="quick-reference-important-urls">Quick reference — important
+URLs</h2>
+<table>
+<colgroup>
+<col style="width: 50%" />
+<col style="width: 50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>URL</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td><code>https://uat-office.naleli.co.za/</code></td>
+<td>Public landing</td>
+</tr>
+<tr class="even">
+<td><code>https://uat-office.naleli.co.za/login</code></td>
+<td>Login</td>
+</tr>
+<tr class="odd">
+<td><code>https://uat-office.naleli.co.za/app/dashboard</code></td>
+<td>Learner Netflix-style dashboard</td>
+</tr>
+<tr class="even">
+<td><code>https://uat-office.naleli.co.za/app/pathway</code></td>
+<td>Learner pathway (36 modules)</td>
+</tr>
+<tr class="odd">
+<td><code>https://uat-office.naleli.co.za/app/lesson/:id</code></td>
+<td>Learner lesson (renders enriched blocks)</td>
+</tr>
+<tr class="even">
+<td><code>https://uat-office.naleli.co.za/app/poe</code></td>
+<td>Learner POE editor</td>
+</tr>
+<tr class="odd">
+<td><code>https://uat-office.naleli.co.za/admin/dashboard</code></td>
+<td>Admin dashboard</td>
+</tr>
+<tr class="even">
+<td><code>https://uat-office.naleli.co.za/admin/curriculum-mapping</code></td>
+<td>Curriculum mapping matrix</td>
+</tr>
+<tr class="odd">
+<td><code>https://uat-office.naleli.co.za/admin/content-review</code></td>
+<td>AI content SME review (NEW in v1.1)</td>
+</tr>
+<tr class="even">
+<td><code>https://uat-office.naleli.co.za/admin/audit</code></td>
+<td>Audit trail</td>
+</tr>
+<tr class="odd">
+<td><code>https://uat-office.naleli.co.za/assessor/review</code></td>
+<td>Assessor 3-column review</td>
+</tr>
+<tr class="even">
+<td><code>https://uat-office.naleli.co.za/moderator/review</code></td>
+<td>Moderator review</td>
+</tr>
+<tr class="odd">
+<td><code>https://uat-office.naleli.co.za/healthz</code></td>
+<td>Container healthcheck</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="quick-reference-default-logins">Quick reference — default
+logins</h2>
+<table>
+<colgroup>
+<col style="width: 33%" />
+<col style="width: 33%" />
+<col style="width: 33%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Role</th>
+<th>Email</th>
+<th>Password</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Super Admin</td>
+<td><code>superadmin@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+</tr>
+<tr class="even">
+<td>Admin</td>
+<td><code>admin@naleli.co.za</code></td>
+<td><code>change-on-first-login</code> (forces rotation)</td>
+</tr>
+<tr class="odd">
+<td>Course Manager</td>
+<td><code>coursemanager@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+</tr>
+<tr class="even">
+<td>Facilitator</td>
+<td><code>facilitator@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+</tr>
+<tr class="odd">
+<td>Assessor</td>
+<td><code>assessor@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+</tr>
+<tr class="even">
+<td>Moderator</td>
+<td><code>moderator@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+</tr>
+<tr class="odd">
+<td>Finance</td>
+<td><code>finance@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+</tr>
+<tr class="even">
+<td>Supervisor</td>
+<td><code>supervisor@naleli.co.za</code></td>
+<td><code>ChangeMe123!</code></td>
+</tr>
+<tr class="odd">
+<td>Learner</td>
+<td><code>student@naleli.co.za</code></td>
+<td><code>Student123!</code></td>
+</tr>
+<tr class="even">
+<td>Learner (pending)</td>
+<td><code>pending@naleli.co.za</code></td>
+<td><code>Student123!</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Document version:</strong> v1.2 — 2026-06-14
+<strong>Build:</strong> 1d3fcad (main) / 5d8ef03 (develop)
+<strong>Sign-off pending:</strong> SSH key regeneration after sandbox
+wipe — see “Important” note in next message.</p>
+</body>
+</html>
