@@ -21,6 +21,7 @@ CREATE TABLE IF NOT EXISTS users (
   employer_id TEXT,
   avatar_color TEXT,
   bio TEXT,
+  must_change_password INTEGER NOT NULL DEFAULT 0,   -- 1 = force password change on next login (e.g. default seed)
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   last_login TEXT
 );

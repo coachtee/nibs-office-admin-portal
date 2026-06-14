@@ -30,9 +30,24 @@ function reset() {
 }
 
 function makeUser({ email, name, role, status='active', payment_status='active', cohort_id=null, employer_id=null, password='ChangeMe123!' }) {
+  // Allow ADMIN_DEFAULT_PASSWORD / ADMIN_PASSWORD to override the seed default
+  // for the admin account (email matches ADMIN_EMAIL). If the env value is the
+  // literal placeholder 'change-on-first-login' we still set it (as the temp
+  // password) and flag must_change_password=1, so the user is forced to set a
+  // real one on first login. Other seeded users keep the legacy default and are
+  // not flagged (they are dev/demo only).
+  const adminEnvPassword = process.env.ADMIN_DEFAULT_PASSWORD || process.env.ADMIN_PASSWORD;
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@naleli.co.za';
+  let mustChange = 0;
+  if (role === 'admin' && email === adminEmail) {
+    if (adminEnvPassword) password = adminEnvPassword;
+    if (!adminEnvPassword || adminEnvPassword === 'change-on-first-login') {
+      mustChange = 1;
+    }
+  }
   const id = uid();
-  db.prepare(`INSERT INTO users (id,email,password_hash,full_name,role,status,payment_status,cohort_id,employer_id,avatar_color,bio,phone,id_number)
-              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
+  db.prepare(`INSERT INTO users (id,email,password_hash,full_name,role,status,payment_status,cohort_id,employer_id,avatar_color,bio,must_change_password,phone,id_number)
+              VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`).run(
     id, email, bcrypt.hashSync(password, 10), name, role, status, payment_status,
     cohort_id, employer_id, '#1F5132',
     role === 'learner' ? 'Enrolled learner — Occupational Certificate: Office Administrator (334102002).' :
@@ -41,6 +56,7 @@ function makeUser({ email, name, role, status='active', payment_status='active',
     role === 'moderator' ? 'Independent moderator — 334102002.' :
     role === 'supervisor' || role === 'employer' ? 'Workplace supervisor.' :
     role === 'finance' ? 'Finance administrator — payments and access.' : 'Administrator',
+    mustChange,
     '+27 71 000 0000', '9001010000080'
   );
   return id;
@@ -529,9 +545,12 @@ function run() {
 
   loadEnrichedContent();
   console.log('Seed complete — official 334102002 curriculum loaded.');
+  const adminEmail = process.env.ADMIN_EMAIL || 'admin@naleli.co.za';
+  const adminPwd = process.env.ADMIN_DEFAULT_PASSWORD || process.env.ADMIN_PASSWORD || 'ChangeMe123!';
+  console.log(`APP_ENV=${process.env.APP_ENV || 'development'}`);
   console.log('Users:');
-  console.log('  superadmin@naleli.co.za / ChangeMe123!');
-  console.log('  admin@naleli.co.za / ChangeMe123!');
+  console.log(`  superadmin@naleli.co.za / ChangeMe123!  (legacy default — rotate in production)`);
+  console.log(`  ${adminEmail} / ${adminPwd}  ${adminPwd === 'ChangeMe123!' ? '(legacy default — set ADMIN_DEFAULT_PASSWORD in production)' : '(from env)'}`);
   console.log('  coursemanager@naleli.co.za / ChangeMe123!');
   console.log('  facilitator@naleli.co.za / ChangeMe123!');
   console.log('  assessor@naleli.co.za / ChangeMe123!');

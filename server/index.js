@@ -10,7 +10,13 @@ initDb();
 
 const { attachUser, audit } = require('./middleware/auth');
 
-const PORT = process.env.PORT || 8080;
+// ===== Environment =====
+const APP_ENV = process.env.APP_ENV || 'development';
+const APP_URL = process.env.APP_URL || 'http://localhost:8088';
+const PORT   = parseInt(process.env.APP_PORT || process.env.PORT || '8088', 10);
+const PORT_EFFECTIVE = isNaN(PORT) ? 8088 : PORT;
+console.log(`[env] APP_ENV=${APP_ENV} APP_URL=${APP_URL} PORT=${PORT_EFFECTIVE}`);
+
 const app = express();
 
 // EJS not used; we serve static pages and JSON APIs.
@@ -78,6 +84,6 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'server_error', message: err.message });
 });
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`NIBS Pathway Portal running on http://0.0.0.0:${PORT}`);
+app.listen(PORT_EFFECTIVE, '0.0.0.0', () => {
+  console.log(`NIBS Pathway Portal running on http://0.0.0.0:${PORT_EFFECTIVE} (APP_ENV=${APP_ENV}, APP_URL=${APP_URL})`);
 });

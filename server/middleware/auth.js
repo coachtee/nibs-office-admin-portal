@@ -92,7 +92,7 @@ function readToken(req) {
 }
 
 function loadUser(uid) {
-  return db.prepare('SELECT id,email,full_name,role,status,payment_status,cohort_id,avatar_color FROM users WHERE id = ?').get(uid);
+  return db.prepare('SELECT id,email,full_name,role,status,payment_status,cohort_id,avatar_color,must_change_password FROM users WHERE id = ?').get(uid);
 }
 
 function attachUser(req, _res, next) {
@@ -109,6 +109,16 @@ function attachUser(req, _res, next) {
 
 function requireAuth(req, res, next) {
   if (!req.user) return res.status(401).json({ error: 'auth_required' });
+  // Force password change gate: only the admin (and any user explicitly flagged)
+  // is required to rotate off the seed default password. UI pages also block
+  // via the me endpoint returning must_change_password, so the front-end can
+  // show a "change password" modal.
+  if (req.user.must_change_password && req.user.role === 'admin') {
+    const path = req.path || '';
+    if (!path.startsWith('/auth/')) {
+      return res.status(403).json({ error: 'must_change_password', message: 'You must change your password before continuing.' });
+    }
+  }
   next();
 }
 
