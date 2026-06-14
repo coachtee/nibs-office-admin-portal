@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Cohort — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    const cohortId = location.pathname.split('/').pop();
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/facilitator'));
+      const d = await NIBS.api('/api/cohorts/' + cohortId);
+      render(d);
+    })();
+
+    function render(d) {
+      const main = document.getElementById('main');
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs"><a href="/facilitator">Facilitator</a> • Cohort</div>
+            <h1>${NIBS.esc(d.cohort.name)}</h1>
+            <div class="meta">${NIBS.fmtDate(d.cohort.start_date)} → ${NIBS.fmtDate(d.cohort.end_date)}</div>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-24">
+          <div class="card pad-lg">
+            <h3>Add attendance</h3>
+            <form id="attForm" class="form-row">
+              <div><label>Date</label><input type="date" name="session_date" value="${new Date().toISOString().slice(0,10)}" /></div>
+              <div><label>Learner</label><select name="user_id">${d.learners.map(l => `<option value="${l.id}">${NIBS.esc(l.full_name)}</option>`).join('')}</select></div>
+              <div><label>Status</label><select name="status"><option>present</option><option>late</option><option>absent</option></select></div>
+              <div style="display:flex; align-items:flex-end;"><button class="btn primary">Save</button></div>
+            </form>
+          </div>
+          <div class="card pad-lg">
+            <h3>Add class note</h3>
+            <form id="noteForm">
+              <label>Title</label><input name="title" required />
+              <div class="mt-8"></div>
+              <label>Body</label><textarea name="body"></textarea>
+              <button class="btn primary mt-8">Save</button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card pad-lg">
+          <h3>Learners (${d.learners.length})</h3>
+          <table class="tbl">
+            <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Payment</th><th>Last login</th><th></th></tr></thead>
+            <tbody>${d.learners.map(l => `<tr>
+              <td><b>${NIBS.esc(l.full_name)}</b></td>
+              <td>${NIBS.esc(l.email)}</td>
+              <td>${NIBS.statusPill(l.status)}</td>
+              <td>${NIBS.statusPill(l.payment_status)}</td>
+              <td>${NIBS.fmtDateTime(l.last_login)}</td>
+              <td><a class="btn sm" href="/facilitator/learner/${l.id}">Open</a></td>
+            </tr>`).join('') || '<tr><td colspan="6" class="muted">No learners.</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
+
+      document.getElementById('attForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        await NIBS.api('/api/facilitator/attendance', { method: 'POST', body: Object.fromEntries(fd), query: { cohort_id: cohortId } });
+        NIBS.toast('Attendance saved', 'ok');
+      };
+      document.getElementById('noteForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const body = Object.fromEntries(fd);
+        body.cohort_id = cohortId;
+        await NIBS.api('/api/facilitator/class-notes', { method: 'POST', body });
+        NIBS.toast('Note saved', 'ok');
+      };
+    }
+  </script>
+</body>
+</html>

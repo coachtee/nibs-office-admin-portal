@@ -1,0 +1,50 @@
+# NIBS Office Admin Portal — Portainer / docker compose
+#
+# This file is the source of truth for the UAT deployment at
+#   https://uat-office.naleli.co.za
+# behind Nginx Proxy Manager on port 8088.
+#
+# Usage in Portainer:
+#   1. Add a new stack named `office-admin-portal`
+#   2. Use this docker-compose.yml (Repository method, or paste below)
+#   3. Add an env file `office-admin-portal.env` (see .env.example)
+#   4. Deploy
+#
+# Data is persisted on the host in `./data` (DB, uploads, exports).
+# Restart policy: unless-stopped (per Portainer / UAT requirement).
+
+services:
+  office-admin-portal:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: naleli/office-admin-portal:latest
+    container_name: office-admin-portal
+    restart: unless-stopped
+    env_file:
+      - office-admin-portal.env
+    environment:
+      - NODE_ENV=production
+      - PORT=8088
+      - APP_PORT=8088
+      - DB_PATH=/data/nibs.db
+      - SQLITE_PATH=/data/nibs.db
+      - UPLOAD_DIR=/data/uploads
+      - PDF_EXPORT_DIR=/data/uploads/exports
+    volumes:
+      - ./data:/data
+      - ./uploads:/data/uploads
+      - ./exports:/data/uploads/exports
+    ports:
+      - "8088:8088"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:8088/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

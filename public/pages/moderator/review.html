@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moderation Review — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    const submissionId = location.pathname.split('/').pop();
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/moderator'));
+      const d = await NIBS.api('/api/moderator/review/' + submissionId);
+      render(d);
+    })();
+
+    function render(d) {
+      const it = d.item, sub = d.submission, learner = d.learner, files = d.files, fields = d.fields, assessor = d.assessor, history = d.history;
+      const cur = d.curriculum || {};
+      const wm = cur.wm;
+      const iacs = cur.iacs || [];
+      const eisa = cur.eisa_focus_area;
+      let data = {}; try { data = JSON.parse(sub.data_json || '{}'); } catch {}
+      const main = document.getElementById('main');
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs"><a href="/moderator">Moderator</a> • Review • ${wm ? NIBS.esc(wm.code) : 'POE'}</div>
+            <h1>${NIBS.esc(it.title)}</h1>
+            <div class="meta">${NIBS.esc(it.code || '')} • ${NIBS.esc(learner.full_name)} • ${NIBS.statusPill(sub.status)} ${eisa ? ' • EISA Focus Area ' + eisa : ''}</div>
+          </div>
+          <div class="flex gap-12">
+            <a class="btn" href="/api/pdf/moderation/${learner.id}" target="_blank">📄 Open moderation report</a>
+          </div>
+        </div>
+        <div class="demo-banner">⚠ Moderation checks the assessor's decision against the same official curriculum mapping (QCTO 334102002).</div>
+
+        <div class="review-grid">
+          <aside>
+            <div class="card pad-lg">
+              <div class="avatar lg" style="margin: 0 auto 12px;">${(learner.full_name||'L').slice(0,1)}</div>
+              <h3 style="text-align:center; margin-bottom: 4px;">${NIBS.esc(learner.full_name)}</h3>
+              <p class="small muted" style="text-align:center;">${NIBS.esc(learner.email)}</p>
+              <hr/>
+              <p class="small"><b>POE item:</b> ${NIBS.esc(it.title)}</p>
+              ${wm ? `<p class="small mt-8"><b>Work Experience Module</b></p><p class="small muted">${NIBS.esc(wm.code)} — ${NIBS.esc(wm.title)}</p>` : ''}
+              <p class="small mt-8"><b>Linked outcome</b></p>
+              <p class="small muted">${NIBS.esc(it.linked_outcome || 'Office Administrator exit-level outcomes')}</p>
+              <p class="small mt-8"><b>Assessment criteria</b></p>
+              <p class="small muted">${NIBS.esc(it.assessment_criteria || 'Per curriculum document')}</p>
+            </div>
+
+            <div class="card pad-lg mt-16">
+              <h3>Curriculum criteria to verify</h3>
+              <p class="small muted">Verify these official IACs are met. Tick once confirmed.</p>
+              <div>
+                ${iacs.length ? iacs.map((iac, i) => `
+                  <label class="flex center gap-8 mt-8" style="font-size:.85rem; font-weight:500;">
+                    <input type="checkbox" data-iac="${iac.id}" />
+                    <span><b>${NIBS.esc(iac.code || 'IAC')}</b> — ${NIBS.esc(iac.title.slice(0, 80))}</span>
+                  </label>
+                `).join('') : '<p class="small muted">No IACs linked.</p>'}
+              </div>
+            </div>
+          </aside>
+
+          <main>
+            <div class="card pad-lg">
+              <h3>Learner submission</h3>
+              ${fields.map(f => `<div class="poe-item">
+                <h4>${NIBS.esc(f.label)}</h4>
+                <div style="white-space: pre-wrap;">${NIBS.esc((data[f.id] != null ? data[f.id] : '—'))}</div>
+              </div>`).join('')}
+            </div>
+            <div class="card pad-lg mt-24">
+              <h3>Uploaded evidence</h3>
+              ${files.length ? files.map(f => `<div class="poe-item"><a href="/uploads/${NIBS.esc(f.stored_name)}" target="_blank">${NIBS.esc(f.original_name)}</a></div>`).join('') : '<p class="muted">No files.</p>'}
+            </div>
+            <div class="card pad-lg mt-24">
+              <h3>Assessor decision</h3>
+              ${assessor ? `<div class="poe-item">
+                <div class="item-head"><h4>${NIBS.esc(assessor.decision)}</h4><div class="meta">${NIBS.fmtDateTime(assessor.created_at)}</div></div>
+                <p>${NIBS.esc(assessor.feedback || '')}</p>
+                <p class="small muted">Assessor: ${NIBS.esc(assessor.signoff_name || '—')} (${NIBS.esc(assessor.signoff_role || '—')}) ${assessor.signed_off ? '✓ signed' : 'unsigned'}</p>
+              </div>` : '<p class="muted">No assessor decision.</p>'}
+            </div>
+            ${history.length ? `<div class="card pad-lg mt-24"><h3>Moderation history</h3>${history.map(h => `<div class="poe-item"><h4>${NIBS.esc(h.decision)}</h4><div class="meta">${NIBS.fmtDateTime(h.created_at)} • ${NIBS.esc(h.signoff_name||'')}</div><p>${NIBS.esc(h.findings||'')}</p></div>`).join('')}</div>` : ''}
+          </main>
+
+          <aside>
+            <div class="card pad-lg" style="position: sticky; top: 18px;">
+              <h3>Moderation decision</h3>
+              <form id="decForm">
+                <label>Decision</label>
+                <select name="decision" required>
+                  <option value="approved">Approve (final_approved)</option>
+                  <option value="reassessment_required">Request reassessment</option>
+                  <option value="moderation_complete">Mark moderation complete (moderation_approved)</option>
+                </select>
+                <label class="mt-8">Findings</label>
+                <textarea name="findings" placeholder="Moderation findings — alignment with official criteria, authenticity, etc." required></textarea>
+                <label class="mt-8">Criteria checked (one per line)</label>
+                <textarea name="criteria" placeholder="IAC0101 verified...&#10;IAC0203 verified..."></textarea>
+                <label class="mt-8">Sign-off name</label>
+                <input name="signoff_name" placeholder="Your full name" />
+                <label class="mt-8">Sign-off role</label>
+                <input name="signoff_role" value="Moderator" />
+                <label class="flex center gap-8 mt-8" style="font-weight:500;"><input type="checkbox" name="signed_off" /> Sign off</label>
+                <button class="btn primary mt-16" style="width:100%;">Submit</button>
+              </form>
+            </div>
+          </aside>
+        </div>
+      `;
+
+      document.getElementById('decForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const body = Object.fromEntries(fd);
+        body.signed_off = !!fd.get('signed_off');
+        body.criteria_checked = (body.criteria || '').split('\n').filter(Boolean).concat(
+          Array.from(document.querySelectorAll('[data-iac]:checked')).map(el => el.dataset.iac)
+        );
+        try {
+          const r = await NIBS.api('/api/moderator/decide', { method: 'POST', body: { ...body, submission_id } });
+          NIBS.toast('Decision recorded: ' + r.new_status, 'ok');
+          setTimeout(() => location.href = '/moderator', 600);
+        } catch (err) { NIBS.toast('Failed: ' + err.message, 'err'); }
+      };
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Portfolio of Evidence — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/app/poe'));
+      const [pathway, subs] = await Promise.all([
+        NIBS.api('/api/learner/pathway'),
+        NIBS.api('/api/poe/my-submissions'),
+      ]);
+      render(pathway, subs);
+    })();
+
+    function render(pathway, subs) {
+      const main = document.getElementById('main');
+      const poeTab = (pathway.tabs || []).find(t => t.key === 'poe');
+      const sections = poeTab?.sections || [];
+      const items = poeTab?.items || [];
+      const subMap = new Map(subs.submissions.map(s => [s.item_id, s]));
+
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">POE • 334102002</div>
+            <h1>Portfolio of Evidence</h1>
+            <div class="meta">${items.length} official evidence items across ${sections.length} Work Experience Module sections</div>
+          </div>
+          <div class="flex gap-12">
+            <a class="btn" id="exportPack">📄 Export full POE pack</a>
+          </div>
+        </div>
+        <div class="demo-banner">⚠ POE structure mirrors the official QCTO Statement of Work Experience: one section per Work Experience Module, with Work Activities (WAs) and Supporting Evidence (SEs).</div>
+
+        <div class="grid-4 mb-24">
+          <div class="kpi"><span class="label">WM sections</span><span class="value">${sections.length}</span><span class="delta">official structure</span></div>
+          <div class="kpi"><span class="label">Total POE items</span><span class="value">${items.length}</span><span class="delta">${subs.submissions.length} submitted</span></div>
+          <div class="kpi"><span class="label">Supervisor signed</span><span class="value">${subs.submissions.filter(s => s.supervisor_signed).length}</span><span class="delta">workplace sign-off</span></div>
+          <div class="kpi"><span class="label">Final approved</span><span class="value">${subs.submissions.filter(s => s.status === 'final_approved').length}</span><span class="delta">moderation complete</span></div>
+        </div>
+
+        ${sections.map(s => `
+          <section class="poe-section">
+            <div class="head">
+              <h3>${NIBS.esc(s.title)}</h3>
+              <div class="flex gap-8">
+                <span class="pill">${NIBS.esc(s.code || '')}</span>
+                ${s.linked_eisa_focus_areas && JSON.parse(s.linked_eisa_focus_areas || '[]').length ? `<span class="pill gold">EISA FA ${JSON.parse(s.linked_eisa_focus_areas)[0]}</span>` : ''}
+              </div>
+            </div>
+            <p class="muted small">${NIBS.esc(s.description || '')}</p>
+            <div class="grid-2">
+              ${items.filter(i => i.section_id === s.id).map(it => {
+                const sub = subMap.get(it.id);
+                return `<div class="poe-item">
+                  <div class="item-head">
+                    <div>
+                      <h4>${NIBS.esc(it.code || '')} — ${NIBS.esc(it.title)}</h4>
+                      <div class="meta">Linked: ${NIBS.esc(it.linked_outcome || 'Office Administrator exit-level outcomes')}</div>
+                    </div>
+                    ${sub ? NIBS.statusPill(sub.status) : '<span class="pill grey">not started</span>'}
+                  </div>
+                  <div class="flex gap-12 mt-8">
+                    <a class="btn sm primary" href="/app/poe/${it.id}">Open</a>
+                    ${sub ? `<a class="btn sm" href="/app/poe/${it.id}#preview">Preview PDF</a>` : ''}
+                    ${sub && sub.supervisor_signed ? `<span class="pill green">✓ supervisor signed</span>` : ''}
+                  </div>
+                </div>`;
+              }).join('') || '<div class="muted small">No items in this section.</div>'}
+            </div>
+          </section>
+        `).join('')}
+      `;
+
+      document.getElementById('exportPack').onclick = () => {
+        NIBS.toast('POE pack export — available to admin and assessor roles.', 'ok');
+      };
+    }
+  </script>
+</body>
+</html>

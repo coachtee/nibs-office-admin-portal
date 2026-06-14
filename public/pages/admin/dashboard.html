@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/admin'));
+      const data = await NIBS.api('/api/reports/dashboard');
+      render(data);
+    })();
+
+    function render(d) {
+      const c = d.counts;
+      const main = document.getElementById('main');
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Admin</div>
+            <h1>Operations overview</h1>
+            <div class="meta">Live counts across the pathway</div>
+          </div>
+          <div class="flex gap-12">
+            <a class="btn" href="/admin/users">Manage users</a>
+            <a class="btn primary" href="/admin/course-builder">Course builder</a>
+          </div>
+        </div>
+        <div class="demo-banner">⚠ Demo content — replace with official curriculum documents when uploaded.</div>
+
+        <div class="grid-4 mb-24">
+          <div class="kpi"><span class="label">Learners (total)</span><span class="value">${c.learners}</span></div>
+          <div class="kpi"><span class="label">Active</span><span class="value">${c.active}</span></div>
+          <div class="kpi"><span class="label">Pending payment</span><span class="value">${c.pending}</span></div>
+          <div class="kpi"><span class="label">Moderation queue</span><span class="value">${c.moderation_queue}</span></div>
+        </div>
+
+        <div class="grid-3 mb-24">
+          <div class="card pad-lg">
+            <h3>📂 POE</h3>
+            <table class="tbl">
+              <tr><td>Drafts</td><td><b>${c.poe_drafts}</b></td></tr>
+              <tr><td>Submitted</td><td><b>${c.poe_submitted}</b></td></tr>
+              <tr><td>Competent</td><td><b>${c.poe_competent}</b></td></tr>
+              <tr><td>Not yet competent</td><td><b>${c.poe_not_competent}</b></td></tr>
+              <tr><td>Final approved</td><td><b>${c.final_approved}</b></td></tr>
+            </table>
+            <a class="btn mt-8" href="/admin/poe-templates">Manage POE templates →</a>
+          </div>
+          <div class="card pad-lg">
+            <h3>⚖️ Assessor queue</h3>
+            <p class="muted">Items waiting for assessor review.</p>
+            <p style="font-family: var(--font-serif); font-size: 2.4rem;">${c.assessor_queue}</p>
+            <a class="btn mt-8" href="/assessor">Open assessor queue →</a>
+          </div>
+          <div class="card pad-lg">
+            <h3>🛡 Moderation</h3>
+            <p class="muted">Items selected for moderation.</p>
+            <p style="font-family: var(--font-serif); font-size: 2.4rem;">${c.moderation_queue}</p>
+            <a class="btn mt-8" href="/moderator">Open moderation queue →</a>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div class="card pad-lg">
+            <h3>Quick actions</h3>
+            <div class="grid-2 mt-8">
+              <a class="btn" href="/admin/users">➕ Create learner</a>
+              <a class="btn" href="/admin/curriculum-mapping">🗺 Curriculum mapping</a>
+              <a class="btn" href="/admin/course-builder">🛠 Course builder</a>
+              <a class="btn" href="/admin/poe-templates">📋 POE templates</a>
+              <a class="btn" href="/admin/reports">📊 Reports</a>
+              <a class="btn" href="/admin/audit">🔍 Audit trail</a>
+            </div>
+          </div>
+          <div class="card pad-lg">
+            <h3>Curriculum status</h3>
+            <p class="muted">All official curriculum documents should be uploaded and approved before they become visible to learners.</p>
+            <a class="btn primary mt-8" href="/admin/course-builder">Manage curriculum →</a>
+          </div>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

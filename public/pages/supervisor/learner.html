@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learner — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    const learnerId = location.pathname.split('/').pop();
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/supervisor'));
+      const d = await NIBS.api('/api/supervisor/learner/' + learnerId);
+      render(d);
+    })();
+
+    function render(d) {
+      const main = document.getElementById('main');
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs"><a href="/supervisor">Supervisor</a> • Learner</div>
+            <h1>${NIBS.esc(d.learner.full_name)}</h1>
+            <div class="meta">${NIBS.esc(d.learner.email)} • ${NIBS.esc(d.learner.cohort_id || '—')}</div>
+          </div>
+        </div>
+
+        <div class="card pad-lg mb-24">
+          <h3>Workplace evidence</h3>
+          ${d.workplace.length ? d.workplace.map(p => `<div class="poe-item">
+            <div class="item-head"><div><h4>${NIBS.esc(p.item_title || '')}</h4><div class="meta">${NIBS.esc(p.item_code || '')} • Attempt ${p.attempt}</div></div>${NIBS.statusPill(p.status)}</div>
+            <a class="btn sm" href="/app/poe/${p.item_id}">Open POE item</a>
+          </div>`).join('') : '<p class="muted">No workplace POE submissions yet.</p>'}
+        </div>
+
+        <div class="card pad-lg mb-24">
+          <h3>Add supervisor sign-off</h3>
+          <form id="soForm">
+            <div class="form-row">
+              <div><label>Work activity code</label><input name="work_activity_code" placeholder="e.g. WE-260101" /></div>
+              <div><label>Signed off?</label><select name="signed_off"><option value="1">Yes</option><option value="0">No</option></select></div>
+            </div>
+            <label class="mt-8">Feedback</label>
+            <textarea name="feedback" required></textarea>
+            <button class="btn primary mt-16">Save sign-off</button>
+          </form>
+        </div>
+
+        <div class="card pad-lg">
+          <h3>Sign-off history</h3>
+          ${d.signoffs.length ? d.signoffs.map(s => `<div class="poe-item">
+            <div class="item-head"><h4>${NIBS.esc(s.work_activity_code || 'Workplace activity')}</h4><div class="meta">${NIBS.fmtDateTime(s.created_at)} • ${s.signed_off ? '✓ signed' : 'unsigned'}</div></div>
+            <p>${NIBS.esc(s.feedback || '')}</p>
+          </div>`).join('') : '<p class="muted">No sign-offs yet.</p>'}
+        </div>
+      `;
+
+      document.getElementById('soForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const body = Object.fromEntries(fd);
+        body.user_id = learnerId;
+        body.signed_off = body.signed_off === '1';
+        try {
+          await NIBS.api('/api/supervisor/signoff', { method: 'POST', body });
+          NIBS.toast('Sign-off saved', 'ok');
+          setTimeout(() => location.reload(), 500);
+        } catch (err) { NIBS.toast('Failed: ' + err.message, 'err'); }
+      };
+    }
+  </script>
+</body>
+</html>

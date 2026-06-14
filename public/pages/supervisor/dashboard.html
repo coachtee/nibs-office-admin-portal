@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Supervisor — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/supervisor'));
+      const d = await NIBS.api('/api/supervisor/learners');
+      render(d.learners);
+    })();
+
+    function render(learners) {
+      const main = document.getElementById('main');
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Supervisor</div>
+            <h1>My learners</h1>
+            <div class="meta">${learners.length} learner(s) assigned</div>
+          </div>
+        </div>
+        <div class="card pad-lg">
+          <table class="tbl">
+            <thead><tr><th>Name</th><th>Email</th><th>Cohort</th><th>Status</th><th></th></tr></thead>
+            <tbody>${learners.map(l => `<tr>
+              <td><b>${NIBS.esc(l.full_name)}</b></td>
+              <td>${NIBS.esc(l.email)}</td>
+              <td>${NIBS.esc(l.cohort_id || '—')}</td>
+              <td>${NIBS.statusPill(l.status)}</td>
+              <td><a class="btn sm primary" href="/supervisor/learner/${l.id}">Open →</a></td>
+            </tr>`).join('') || '<tr><td colspan="5" class="muted">No learners assigned.</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

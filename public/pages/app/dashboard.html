@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+  <meta name="theme-color" content="#1F5132" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main">
+      <p class="muted">Loading...</p>
+    </div>
+  </div>
+
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/app'));
+      const data = await NIBS.api('/api/learner/dashboard');
+      render(data);
+    })();
+
+    function render(d) {
+      const u = d.user;
+      const cp = d.course_progress || {};
+      const mb = d.modules_by_type || { knowledge: [], practical_skill: [], work_experience: [] };
+      const coursePct = cp.modules_total ? Math.round(cp.modules_done / cp.modules_total * 100) : 0;
+      const kmPct = mb.knowledge.length ? Math.round(cp.km_done / mb.knowledge.length * 100) : 0;
+      const pmPct = mb.practical_skill.length ? Math.round(cp.pm_done / mb.practical_skill.length * 100) : 0;
+      const wmPct = mb.work_experience.length ? Math.round(cp.wm_done / mb.work_experience.length * 100) : 0;
+      const poePct = cp.poe_total ? Math.round(cp.poe_competent / cp.poe_total * 100) : 0;
+
+      const main = document.getElementById('main');
+      if (d.state && d.state.payment_locked) {
+        main.innerHTML = `
+          <div class="page-head"><div><div class="crumbs">Office Administrator • Learner</div><h1>Welcome, ${NIBS.esc(u.full_name.split(' ')[0])}.</h1><div class="meta">Your access is pending payment confirmation.</div></div></div>
+          <div class="demo-banner">⚠ Demo content mode — replace once official curriculum is uploaded.</div>
+          <div class="locked">
+            <div class="ico">🔒</div>
+            <h2>Your access is pending payment confirmation.</h2>
+            <p class="muted" style="max-width: 480px;">Once your payment is confirmed, you can sign in and start your Office Administrator pathway. You can still browse the public site in the meantime.</p>
+            <div class="flex gap-12 center" style="justify-content: center; margin-top: 20px;">
+              <a class="btn primary" href="/">Back to site</a>
+              <a class="btn" href="/logout">Logout</a>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const cover = (m) => `<div class="mod-card">
+        <div class="cover ${m.type==='practical_skill'?'gold':m.type==='work_experience'?'cream':''}">
+          <span class="type">${(m.type||'').replace(/_/g, ' ')}</span>
+          <span>${NIBS.esc(m.code || '')}</span>
+          <span class="code">NQF ${m.nqf_level || '—'} • ${m.credits || '—'} cr</span>
+        </div>
+        <div class="body">
+          <h4>${NIBS.esc(m.title)}</h4>
+          <div class="sub">${NIBS.esc((m.sub || '').slice(0, 80))}</div>
+          <div class="progress"><span style="width:${m.progress || 0}%"></span></div>
+          <div class="meta-row"><span>${m.progress || 0}%</span>${m.href ? `<a class="btn sm primary" href="${m.href}">${m.cta || 'Open'} →</a>` : ''}</div>
+        </div>
+      </div>`;
+
+      const c = d.continue;
+      const contCard = c ? `<div class="mod-card" style="grid-column: span 2;">
+        <div class="cover" style="aspect-ratio: 21/9; min-height: 200px;">
+          <div style="text-align:left; padding: 18px; width: 100%;">
+            <div class="type" style="position: static; display: inline-block; margin-bottom: 8px;">Continue where you left off</div>
+            <div style="font-family: var(--font-serif); font-size: 1.4rem; line-height: 1.1; margin-bottom: 6px;">${NIBS.esc(c.title)}</div>
+            <div style="opacity:.85; font-size:.9rem;">${NIBS.esc(c.module_code || '')} ${NIBS.esc(c.module_title || '')}</div>
+          </div>
+        </div>
+        <div class="body">
+          <div class="progress" style="height:10px;"><span style="width:${c.progress}%"></span></div>
+          <div class="meta-row"><span>${c.type}</span><a class="btn primary" href="/app/lesson/${c.id}">${c.next_action} →</a></div>
+        </div>
+      </div>` : `<div class="card pad-lg"><h3>Welcome to your pathway</h3><p class="muted">Start with the first module in your pathway.</p><a class="btn primary mt-8" href="/app/pathway">Open pathway</a></div>`;
+
+      const cards = (arr, empty) => arr.length ? arr.map(m => cover(m)).join('') : `<div class="muted small" style="padding: 8px 0;">${empty}</div>`;
+
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">334102002 • Office Administrator • Learner</div>
+            <h1>Welcome back, ${NIBS.esc(u.full_name.split(' ')[0])}.</h1>
+            <div class="meta">${d.course ? NIBS.esc(d.course.title) + ' • ' + (d.course.qualification_type || 'Occupational Certificate') : 'Loading course...'}</div>
+          </div>
+          <div class="flex gap-12">
+            <a class="btn" href="/app/pathway">Open pathway</a>
+            <a class="btn primary" href="/app/poe">My POE</a>
+          </div>
+        </div>
+        <div class="demo-banner">⚠ Draft support content — until the official learner guide is uploaded, lessons use the official module purpose + linked IACs from QCTO 334102002.</div>
+
+        <div class="grid-4 mb-24">
+          <div class="kpi"><span class="label">Overall pathway</span><span class="value">${coursePct}%</span><span class="delta">${cp.modules_done || 0} of ${cp.modules_total || 0} modules</span></div>
+          <div class="kpi"><span class="label">Knowledge (15)</span><span class="value">${kmPct}%</span><span class="delta">${cp.km_done || 0} of ${mb.knowledge.length} complete</span></div>
+          <div class="kpi"><span class="label">Practical (11)</span><span class="value">${pmPct}%</span><span class="delta">${cp.pm_done || 0} of ${mb.practical_skill.length} complete</span></div>
+          <div class="kpi"><span class="label">Workplace (10)</span><span class="value">${wmPct}%</span><span class="delta">${cp.wm_done || 0} of ${mb.work_experience.length} complete</span></div>
+        </div>
+
+        <div class="row-title"><h2>Continue where you left off</h2><a href="/app/pathway">View pathway →</a></div>
+        <div class="grid-3 mb-24">
+          ${contCard}
+        </div>
+
+        <div class="row-title"><h2>Due soon</h2><a href="/app/poe">All POE →</a></div>
+        <div class="cards-row mb-24">${cards((d.due_soon || []).map(x => ({ ...x, sub: 'POE item', mod: 'poe', cta: 'Open', href: '/app/poe/' + x.id })), 'Nothing due soon — well done.')}</div>
+
+        <div class="row-title"><h2>Needs correction</h2></div>
+        <div class="cards-row mb-24">${cards((d.needs_correction || []).map(x => ({ ...x, sub: 'Returned by facilitator', mod: 'poe', cta: 'Resubmit', href: '/app/poe/' + x.id })), 'No items need correction.')}</div>
+
+        <div class="row-title"><h2>Missing POE evidence</h2><a href="/app/poe">All POE →</a></div>
+        <div class="cards-row mb-24">${cards((d.missing_poe || []).map(x => ({ ...x, sub: x.section, mod: 'poe', cta: 'Start', href: '/app/poe/' + x.id })), 'You are up to date.')}</div>
+
+        <div class="row-title"><h2>Submitted for review</h2></div>
+        <div class="cards-row mb-24">${cards((d.submitted_for_review || []).map(x => ({ ...x, sub: 'POE item', mod: 'poe', cta: 'View', href: '/app/poe/' + x.id })), 'Nothing in review.')}</div>
+
+        <div class="row-title"><h2>Recommended next</h2></div>
+        <div class="grid-3 mb-24">
+          ${d.recommended_next ? cover({ ...d.recommended_next, progress: 0, mod: 'poe', cta: 'Start', href: '/app/poe/' + d.recommended_next.id }) : `<div class="card muted">No recommendations yet — finish your first lesson to unlock recommendations.</div>`}
+        </div>
+
+        <div class="grid-2">
+          <div class="card pad-lg">
+            <h3>Assessment readiness (EISA)</h3>
+            <p class="muted">${d.assessment_readiness ? d.assessment_readiness.message : 'Loading...'}</p>
+            <div class="progress mt-8"><span style="width:${coursePct}%"></span></div>
+            <p class="small mt-8 muted">Eligible for EISA when all 36 official modules are complete, all POE evidence is competent and signed off, and a sample has been moderated.</p>
+          </div>
+          <div class="card pad-lg">
+            <h3>Latest feedback</h3>
+            ${d.latest_feedback ? `
+              <p>${NIBS.esc(d.latest_feedback.text)}</p>
+              <p class="small muted">${NIBS.fmtDateTime(d.latest_feedback.date)} • ${d.latest_feedback.kind}</p>
+            ` : `<p class="muted">No feedback yet — keep going.</p>`}
+          </div>
+        </div>
+
+        <div class="row-title mt-24"><h2>Completed recently</h2></div>
+        <div class="cards-row mb-24">${cards((d.completed_recently || []).map(x => ({ ...x, sub: x.module, mod: x.type || 'knowledge', progress: 100, cta: 'Review', href: '/app/lesson/' + x.id })), 'Nothing completed yet.')}</div>
+      `;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reports — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/admin/reports'));
+      const [d, lp, cp, me2, ar, poe, cm, eisa] = await Promise.all([
+        NIBS.api('/api/reports/dashboard'),
+        NIBS.api('/api/reports/learner-progress'),
+        NIBS.api('/api/reports/cohort-progress'),
+        NIBS.api('/api/reports/missing-evidence'),
+        NIBS.api('/api/reports/at-risk'),
+        NIBS.api('/api/reports/poe-completion'),
+        NIBS.api('/api/reports/curriculum-mapping'),
+        NIBS.api('/api/reports/eisa-readiness'),
+      ]);
+      render(d, lp, cp, me2, ar, poe, cm, eisa);
+    })();
+
+    function render(d, lp, cp, me2, ar, poe, cm, eisa) {
+      const main = document.getElementById('main');
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Admin • Reports</div>
+            <h1>Reports</h1>
+            <div class="meta">Live reports across the pathway</div>
+          </div>
+          <div class="flex gap-12">
+            <a class="btn" href="/api/pdf/missing-evidence" target="_blank">📄 Missing evidence PDF</a>
+          </div>
+        </div>
+
+        <div class="grid-4 mb-24">
+          <div class="kpi"><span class="label">Learners</span><span class="value">${d.counts.learners}</span></div>
+          <div class="kpi"><span class="label">Active</span><span class="value">${d.counts.active}</span></div>
+          <div class="kpi"><span class="label">POE competent</span><span class="value">${d.counts.poe_competent}</span></div>
+          <div class="kpi"><span class="label">Final approved</span><span class="value">${d.counts.final_approved}</span></div>
+        </div>
+
+        <div class="card pad-lg mb-24">
+          <h3>Cohort progress</h3>
+          <table class="tbl"><thead><tr><th>Cohort</th><th>Start</th><th>End</th><th>Learners</th><th>Active</th></tr></thead>
+          <tbody>${cp.rows.map(r => `<tr><td><b>${NIBS.esc(r.name)}</b></td><td>${NIBS.esc(r.start_date || '—')}</td><td>${NIBS.esc(r.end_date || '—')}</td><td>${r.learners}</td><td>${r.active}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">No cohorts.</td></tr>'}</tbody></table>
+        </div>
+
+        <div class="card pad-lg mb-24">
+          <h3>Learner progress</h3>
+          <table class="tbl"><thead><tr><th>Learner</th><th>Cohort</th><th>Status</th><th>Lessons done</th><th>WB submitted</th><th>POE competent</th><th>POE attempted</th><th>PDF</th></tr></thead>
+          <tbody>${lp.rows.map(r => `<tr>
+            <td><b>${NIBS.esc(r.full_name)}</b><br/><span class="small muted">${NIBS.esc(r.email)}</span></td>
+            <td>${NIBS.esc(r.cohort_id || '—')}</td>
+            <td>${NIBS.statusPill(r.status)}</td>
+            <td>${r.lessons_completed}/${r.lessons_attempted}</td>
+            <td>${r.wb_submitted}</td>
+            <td>${r.poe_competent}</td>
+            <td>${r.poe_attempted}</td>
+            <td>
+              <a class="btn sm" href="/api/pdf/progress/${r.id}" target="_blank">Progress</a>
+              <a class="btn sm" href="/api/pdf/poe-pack/${r.id}" target="_blank">POE pack</a>
+              <a class="btn sm" href="/api/pdf/workbook/${r.id}" target="_blank">Workbook</a>
+            </td>
+          </tr>`).join('') || '<tr><td colspan="8" class="muted">No learners.</td></tr>'}</tbody></table>
+        </div>
+
+        <div class="grid-2 mb-24">
+          <div class="card pad-lg">
+            <h3>Missing evidence</h3>
+            <table class="tbl"><thead><tr><th>Learner</th><th>Drafts</th><th>Needs correction</th></tr></thead>
+            <tbody>${me2.rows.map(r => `<tr><td>${NIBS.esc(r.full_name)}</td><td>${r.drafts}</td><td>${r.needs_correction}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">—</td></tr>'}</tbody></table>
+          </div>
+          <div class="card pad-lg">
+            <h3>At-risk learners</h3>
+            ${ar.rows.length ? ar.rows.map(r => `<div class="poe-item"><h4>${NIBS.esc(r.full_name)}</h4><div class="meta">${NIBS.esc(r.feedback || '')} • ${NIBS.fmtDateTime(r.created_at)}</div></div>`).join('') : '<p class="muted">No flags.</p>'}
+          </div>
+        </div>
+
+        <div class="card pad-lg mb-24">
+          <h3>POE completion breakdown</h3>
+          <div class="grid-4">
+            ${poe.rows.map(r => `<div class="kpi"><span class="label">${r.status}</span><span class="value">${r.count}</span></div>`).join('') || '<p class="muted">No data.</p>'}
+          </div>
+        </div>
+
+        <div class="card pad-lg mb-24">
+          <h3>Curriculum mapping report</h3>
+          <table class="tbl"><thead><tr><th>Code</th><th>Module</th><th>Type</th><th>NQF</th><th>Credits</th><th>Lessons</th><th>POE items</th></tr></thead>
+          <tbody>${cm.rows.map(r => `<tr><td><b>${NIBS.esc(r.code || '—')}</b></td><td>${NIBS.esc(r.title)}</td><td><span class="pill">${(r.type||'').replace(/_/g,' ')}</span></td><td>${r.nqf_level||'—'}</td><td>${r.credits||'—'}</td><td>${r.lessons}</td><td>${r.poe_items}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">No mapping.</td></tr>'}</tbody></table>
+        </div>
+
+        <div class="card pad-lg">
+          <h3>EISA / final readiness (placeholder)</h3>
+          <p class="muted small">External Integrated Summative Assessment readiness view. Real EISA registration lives in the QCTO system.</p>
+          <table class="tbl"><thead><tr><th>Learner</th><th>Ready</th><th>Final approved</th></tr></thead>
+          <tbody>${eisa.rows.map(r => `<tr><td>${NIBS.esc(r.full_name)}</td><td>${r.ready}</td><td>${r.final_approved}</td></tr>`).join('') || '<tr><td colspan="3" class="muted">No data.</td></tr>'}</tbody></table>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

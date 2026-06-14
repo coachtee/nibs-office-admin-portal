@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Apply — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="topbar">
+    <a class="logo" href="/">
+      <span class="mark">N</span>
+      <span>NIBS Pathway Portal</span>
+    </a>
+    <div class="cta">
+      <a class="btn ghost" href="/">Back to site</a>
+      <a class="btn" href="/login">Login</a>
+    </div>
+  </div>
+
+  <section style="padding: 60px 0;">
+    <div class="container" style="max-width: 720px;">
+      <div class="card pad-lg">
+        <h2 style="margin-top:0;">Apply for the Office Administrator pathway</h2>
+        <p class="muted">Two-minute application. We'll review and confirm your seat.</p>
+
+        <form id="applyForm">
+          <div class="form-row">
+            <div>
+              <label>Full name *</label>
+              <input type="text" name="full_name" required />
+            </div>
+            <div>
+              <label>Email *</label>
+              <input type="email" name="email" required />
+            </div>
+          </div>
+          <div class="form-row mt-8">
+            <div>
+              <label>Phone</label>
+              <input type="text" name="phone" placeholder="+27 ..." />
+            </div>
+            <div>
+              <label>ID number</label>
+              <input type="text" name="id_number" />
+            </div>
+          </div>
+          <hr />
+          <label class="flex center gap-8" style="font-weight: 500; font-size: .9rem;">
+            <input type="checkbox" required style="width:auto;" />
+            <span>I consent to NIBS processing my information under POPIA.</span>
+          </label>
+          <button class="btn primary mt-16" type="submit" style="width:100%;">Submit application</button>
+        </form>
+        <p class="small muted mt-16">By submitting, a learner account is created in <strong>pending payment</strong> status. Once payment is confirmed, learning access unlocks.</p>
+      </div>
+    </div>
+  </section>
+
+  <script src="/static/js/app.js"></script>
+  <script>
+    document.getElementById('applyForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fd = new FormData(e.target);
+      const body = Object.fromEntries(fd.entries());
+      try {
+        await NIBS.api('/api/auth/apply', { method: 'POST', body });
+        NIBS.toast('Application received! Default password: Student123!', 'ok');
+        setTimeout(() => location.href = '/login', 1500);
+      } catch (err) {
+        NIBS.toast('Could not submit: ' + (err.message || ''), 'err');
+      }
+    });
+  </script>
+</body>
+</html>

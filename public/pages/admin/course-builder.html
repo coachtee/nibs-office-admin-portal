@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Course Builder — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/admin/course-builder'));
+      const [c, d, m] = await Promise.all([
+        NIBS.api('/api/courses'),
+        NIBS.api('/api/curriculum/documents'),
+        NIBS.api('/api/curriculum/elements'),
+      ]);
+      render(c.courses, d.documents, m.elements);
+    })();
+
+    function render(courses, docs, elements) {
+      const main = document.getElementById('main');
+      const kms = elements.filter(e => e.type === 'knowledge_module');
+      const pms = elements.filter(e => e.type === 'practical_skill_module');
+      const wms = elements.filter(e => e.type === 'work_experience_module');
+      const iacs = elements.filter(e => e.type === 'internal_assessment_criterion');
+
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Admin • Course Builder</div>
+            <h1>Course builder</h1>
+            <div class="meta">Curriculum ${CURRICULUM_CODE || '334102002'} → Modules → Lessons → Workbook → POE</div>
+          </div>
+          <div class="flex gap-12">
+            <a class="btn" href="/admin/curriculum-mapping">🗺 Curriculum mapping</a>
+            <button class="btn primary" id="uploadBtn">📤 Upload curriculum document</button>
+          </div>
+        </div>
+        <div class="demo-banner">⚠ Official 334102002 structure is pre-seeded. Upload a new curriculum PDF to ingest/replace modules, or use the form to add supporting elements.</div>
+
+        <div class="grid-4 mb-24">
+          <div class="kpi"><span class="label">Knowledge Modules</span><span class="value">${kms.length}</span><span class="delta">${kms.reduce((s, m) => s + (m.credits || 0), 0)} credits</span></div>
+          <div class="kpi"><span class="label">Practical Skill Modules</span><span class="value">${pms.length}</span><span class="delta">${pms.reduce((s, m) => s + (m.credits || 0), 0)} credits</span></div>
+          <div class="kpi"><span class="label">Work Experience Modules</span><span class="value">${wms.length}</span><span class="delta">${wms.reduce((s, m) => s + (m.credits || 0), 0)} credits</span></div>
+          <div class="kpi"><span class="label">Internal Assessment Criteria</span><span class="value">${iacs.length}</span><span class="delta">linked to topics</span></div>
+        </div>
+
+        <div class="card pad-lg mb-24">
+          <div class="card-head">
+            <h3>Knowledge Modules (${kms.length})</h3>
+            <span class="pill">Total credits: ${kms.reduce((s, m) => s + (m.credits || 0), 0)}</span>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Code</th><th>Title</th><th>NQF</th><th>Cr</th><th>Status</th></tr></thead>
+            <tbody>${kms.map(m => `<tr>
+              <td><b>${NIBS.esc(m.code)}</b></td>
+              <td>${NIBS.esc(m.title)}</td>
+              <td>${m.nqf_level || '—'}</td>
+              <td>${m.credits || '—'}</td>
+              <td>${NIBS.statusPill(m.status)}</td>
+            </tr>`).join('') || '<tr><td colspan="5" class="muted">No KMs.</td></tr>'}</tbody>
+          </table>
+        </div>
+
+        <div class="card pad-lg mb-24">
+          <div class="card-head">
+            <h3>Practical Skill Modules (${pms.length})</h3>
+            <span class="pill">Total credits: ${pms.reduce((s, m) => s + (m.credits || 0), 0)}</span>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Code</th><th>Title</th><th>NQF</th><th>Cr</th><th>Status</th></tr></thead>
+            <tbody>${pms.map(m => `<tr>
+              <td><b>${NIBS.esc(m.code)}</b></td>
+              <td>${NIBS.esc(m.title)}</td>
+              <td>${m.nqf_level || '—'}</td>
+              <td>${m.credits || '—'}</td>
+              <td>${NIBS.statusPill(m.status)}</td>
+            </tr>`).join('') || '<tr><td colspan="5" class="muted">No PMs.</td></tr>'}</tbody>
+          </table>
+        </div>
+
+        <div class="card pad-lg">
+          <div class="card-head">
+            <h3>Work Experience Modules (${wms.length})</h3>
+            <span class="pill">Total credits: ${wms.reduce((s, m) => s + (m.credits || 0), 0)}</span>
+          </div>
+          <table class="tbl">
+            <thead><tr><th>Code</th><th>Title</th><th>NQF</th><th>Cr</th><th>EISA</th><th>Status</th></tr></thead>
+            <tbody>${wms.map(m => `<tr>
+              <td><b>${NIBS.esc(m.code)}</b></td>
+              <td>${NIBS.esc(m.title)}</td>
+              <td>${m.nqf_level || '—'}</td>
+              <td>${m.credits || '—'}</td>
+              <td>FA ${m.eisa_focus_area || '—'}</td>
+              <td>${NIBS.statusPill(m.status)}</td>
+            </tr>`).join('') || '<tr><td colspan="6" class="muted">No WMs.</td></tr>'}</tbody>
+          </table>
+        </div>
+
+        <div class="card pad-lg mt-24">
+          <h3>Curriculum documents</h3>
+          <table class="tbl">
+            <thead><tr><th>Title</th><th>Kind</th><th>Status</th><th>Extraction</th></tr></thead>
+            <tbody>${docs.map(d => `<tr>
+              <td>${NIBS.esc(d.title)}</td>
+              <td><span class="pill">${d.document_kind}</span></td>
+              <td>${NIBS.statusPill(d.upload_status)}</td>
+              <td>${NIBS.statusPill(d.extraction_status)}</td>
+            </tr>`).join('') || '<tr><td colspan="4" class="muted">No documents.</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
+
+      document.getElementById('uploadBtn').onclick = () => {
+        const f = `
+          <div><label>Document title</label><input id="f_title" placeholder="e.g. QCTO Curriculum Document 334102002" /></div>
+          <div class="form-row mt-8">
+            <div><label>Document kind</label>
+              <select id="f_kind">
+                <option value="curriculum">Curriculum document</option>
+                <option value="learner_guide">Learner guide</option>
+                <option value="workbook">Workbook</option>
+                <option value="assessment_guide">Assessment guide</option>
+                <option value="poe_guide">POE guide</option>
+                <option value="facilitator_guide">Facilitator guide</option>
+                <option value="moderator_guide">Moderator guide</option>
+                <option value="workplace_logbook">Workplace logbook</option>
+                <option value="supporting_reference">Supporting reference</option>
+              </select>
+            </div>
+            <div><label>Version</label><input id="f_version" value="1.0" /></div>
+          </div>
+          <div class="form-row mt-8">
+            <div><label>Source</label><input id="f_source" placeholder="QCTO" /></div>
+            <div><label>File (PDF)</label><input type="file" id="f_file" accept="application/pdf" /></div>
+          </div>
+        `;
+        const m = window.__modal || (window.__modal = (() => { const d = document.createElement('div'); d.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.4);display:grid;place-items:center;z-index:9999;'; document.body.appendChild(d); return d; })());
+        m.innerHTML = `<div class="card pad-lg" style="max-width: 600px; width: 92%;">
+          <h3>Upload curriculum document</h3>
+          ${f}
+          <p class="small muted mt-8">PDF text is extracted automatically and stored for parsing. Module structure is mapped on review.</p>
+          <div class="flex gap-12 mt-16">
+            <button class="btn" id="m_close">Close</button>
+            <button class="btn primary" id="m_save">Upload</button>
+          </div>
+        </div>`;
+        m.querySelector('#m_close').onclick = () => m.innerHTML = '';
+        m.onclick = (e) => { if (e.target === m) m.innerHTML = ''; };
+        m.querySelector('#m_save').onclick = async () => {
+          const title = m.querySelector('#f_title').value;
+          const kind = m.querySelector('#f_kind').value;
+          const version = m.querySelector('#f_version').value;
+          const source = m.querySelector('#f_source').value;
+          const file = m.querySelector('#f_file').files[0];
+          if (!title) { NIBS.toast('Title is required', 'err'); return; }
+          const fd = new FormData();
+          fd.append('title', title);
+          fd.append('document_kind', kind);
+          fd.append('version', version);
+          fd.append('source', source);
+          if (file) fd.append('file', file);
+          try {
+            const r = await fetch('/api/curriculum/documents', { method: 'POST', body: fd, credentials: 'same-origin' });
+            const j = await r.json();
+            if (!r.ok) throw new Error(j.error || 'upload failed');
+            NIBS.toast('Document uploaded. Extraction: ' + j.extraction_status, 'ok');
+            setTimeout(() => location.reload(), 700);
+          } catch (e) { NIBS.toast('Upload failed: ' + e.message, 'err'); }
+        };
+      };
+    }
+  </script>
+</body>
+</html>

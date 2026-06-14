@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Moderator — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/moderator'));
+      const d = await NIBS.api('/api/moderator/queue');
+      render(d.items);
+    })();
+
+    function render(items) {
+      const main = document.getElementById('main');
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Moderator</div>
+            <h1>Moderation queue</h1>
+            <div class="meta">${items.length} item(s) selected for moderation</div>
+          </div>
+        </div>
+        <div class="card pad-lg">
+          <table class="tbl">
+            <thead><tr><th>Learner</th><th>POE item</th><th>Status</th><th>Assessor decision</th><th>Updated</th><th></th></tr></thead>
+            <tbody>${items.map(i => `<tr>
+              <td><b>${NIBS.esc(i.full_name)}</b></td>
+              <td>${NIBS.esc(i.item_code || '')} ${NIBS.esc(i.item_title || '')}</td>
+              <td>${NIBS.statusPill(i.status)}</td>
+              <td>${NIBS.statusPill(i.assessor_decision)}</td>
+              <td>${NIBS.fmtDateTime(i.updated_at)}</td>
+              <td><a class="btn sm primary" href="/moderator/review/${i.submission_id}">Moderate →</a></td>
+            </tr>`).join('') || '<tr><td colspan="6" class="muted">No items selected for moderation.</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
+    }
+  </script>
+</body>
+</html>

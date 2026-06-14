@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Facilitator — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/facilitator'));
+      const d = await NIBS.api('/api/facilitator/cohorts');
+      render(d.cohorts);
+    })();
+
+    function render(cohorts) {
+      const main = document.getElementById('main');
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Facilitator</div>
+            <h1>My cohorts</h1>
+            <div class="meta">${cohorts.length} cohort(s)</div>
+          </div>
+        </div>
+        ${cohorts.length ? `<div class="grid-2">${cohorts.map(c => `
+          <div class="card pad-lg">
+            <h3>${NIBS.esc(c.name)}</h3>
+            <p class="muted small">${NIBS.esc(c.start_date || '')} → ${NIBS.esc(c.end_date || '')}</p>
+            <a class="btn primary mt-8" href="/facilitator/cohort/${c.id}">Open cohort →</a>
+          </div>
+        `).join('')}</div>` : `<div class="card pad-lg"><p class="muted">No cohorts assigned.</p></div>`}
+      `;
+    }
+  </script>
+</body>
+</html>

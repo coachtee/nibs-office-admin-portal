@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Curriculum Mapping — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/admin/curriculum-mapping'));
+      const [tree, matrix, docs] = await Promise.all([
+        NIBS.api('/api/curriculum/tree'),
+        NIBS.api('/api/curriculum/matrix'),
+        NIBS.api('/api/curriculum/documents'),
+      ]);
+      render(tree, matrix, docs);
+    })();
+
+    function render(tree, matrix, docs) {
+      const main = document.getElementById('main');
+      const totalModules = matrix.rows.length;
+      const kmCount = matrix.rows.filter(r => r.module_type === 'knowledge').length;
+      const pmCount = matrix.rows.filter(r => r.module_type === 'practical_skill').length;
+      const wmCount = matrix.rows.filter(r => r.module_type === 'work_experience').length;
+      const totalTopics = matrix.rows.reduce((s, r) => s + r.topic_count, 0);
+      const totalIACs = matrix.rows.reduce((s, r) => s + r.iac_count, 0);
+      const totalPOE = matrix.rows.reduce((s, r) => s + r.poe_items.length, 0);
+      const totalCredits = matrix.rows.reduce((s, r) => s + (r.credits || 0), 0);
+
+      // Find the curriculum doc
+      const curDoc = docs.documents.find(d => d.document_kind === 'curriculum');
+
+      const modCard = (r) => {
+        const coverClass = r.module_type === 'practical_skill' ? 'gold' : r.module_type === 'work_experience' ? 'cream' : '';
+        const statusPill = NIBS.statusPill(r.status);
+        return `<tr>
+          <td><b>${NIBS.esc(r.module_code)}</b></td>
+          <td>${NIBS.esc(r.module_title)}</td>
+          <td><span class="pill">${r.module_type.replace(/_/g, ' ')}</span></td>
+          <td>${r.nqf || '—'}</td>
+          <td>${r.credits || '—'}</td>
+          <td>${r.topic_count} topics<br><span class="small muted">${(r.topics || []).map(t => NIBS.esc(t.code)).join(' • ') || '—'}</span></td>
+          <td>${r.iac_count} IACs</td>
+          <td>${r.lessons_count} lessons</td>
+          <td>${(r.poe_items || []).length} POE</td>
+          <td>${statusPill}</td>
+        </tr>`;
+      };
+
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Admin • Curriculum Mapping</div>
+            <h1>Curriculum mapping matrix</h1>
+            <div class="meta">${matrix.course ? NIBS.esc(matrix.course.title) + ' • ' + NIBS.esc(matrix.course.code) : 'No course'}</div>
+          </div>
+          <div class="flex gap-12">
+            <button class="btn" onclick="window.print()">🖨 Print</button>
+            <a class="btn primary" href="/admin/poe-templates">Manage POE templates →</a>
+          </div>
+        </div>
+        <div class="demo-banner">⚠ Official curriculum structure (QCTO 334102002) — pre-seeded. Update by uploading a new curriculum document via the course builder.</div>
+
+        <div class="grid-4 mb-24">
+          <div class="kpi"><span class="label">Modules (total)</span><span class="value">${totalModules}</span><span class="delta">${kmCount} KM • ${pmCount} PM • ${wmCount} WM</span></div>
+          <div class="kpi"><span class="label">Topics</span><span class="value">${totalTopics}</span><span class="delta">official</span></div>
+          <div class="kpi"><span class="label">Internal Assessment Criteria</span><span class="value">${totalIACs}</span><span class="delta">across all modules</span></div>
+          <div class="kpi"><span class="label">Credits (total)</span><span class="value">${totalCredits}</span><span class="delta">${matrix.course && matrix.course.nqf_level ? 'NQF ' + matrix.course.nqf_level : ''}</span></div>
+        </div>
+
+        <div class="card pad-lg mb-24">
+          <h3>Curriculum documents</h3>
+          <table class="tbl">
+            <thead><tr><th>Title</th><th>Kind</th><th>Status</th><th>Extraction</th><th></th></tr></thead>
+            <tbody>${docs.documents.map(d => `<tr>
+              <td>${NIBS.esc(d.title)}</td>
+              <td><span class="pill">${d.document_kind}</span></td>
+              <td>${NIBS.statusPill(d.upload_status)}</td>
+              <td>${NIBS.statusPill(d.extraction_status)}</td>
+              <td>${d.upload_status === 'extracted' ? `<button class="btn sm" data-review="${d.id}">Mark for review</button>` : ''}${d.upload_status === 'needs_review' ? `<button class="btn sm" data-approve-doc="${d.id}">Approve</button>` : ''}${d.upload_status === 'approved' ? `<button class="btn sm primary" data-publish-doc="${d.id}">Publish</button>` : ''}</td>
+            </tr>`).join('') || '<tr><td colspan="5" class="muted">No documents.</td></tr>'}</tbody>
+          </table>
+        </div>
+
+        <div class="card pad-lg">
+          <div class="card-head">
+            <h3>Full curriculum mapping matrix</h3>
+            <div class="flex gap-8">
+              <button class="btn sm" data-filter="knowledge">KM only</button>
+              <button class="btn sm" data-filter="practical_skill">PM only</button>
+              <button class="btn sm" data-filter="work_experience">WM only</button>
+              <button class="btn sm" data-filter="all">All</button>
+            </div>
+          </div>
+          <p class="small muted">Each row shows an official module from curriculum 334102002, its NQF level, credits, official topics, IACs, linked lessons and POE items, plus the curriculum element status.</p>
+          <div class="matrix-wrap">
+            <table class="matrix" id="matrixTable">
+              <thead><tr>
+                <th>Module code</th>
+                <th>Title</th>
+                <th>Type</th>
+                <th>NQF</th>
+                <th>Cr</th>
+                <th>Topics</th>
+                <th>IACs</th>
+                <th>Lessons</th>
+                <th>POE</th>
+                <th>Status</th>
+              </tr></thead>
+              <tbody>${matrix.rows.map(modCard).join('')}</tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card pad-lg mt-24">
+          <h3>Occupational tasks (7 EISA focus areas)</h3>
+          ${tree.sections.filter(s => s.code === 'SEC-2').map(s => (s.modules || []).filter(m => m.type === 'occupational_task').map(m => `
+            <div class="poe-item">
+              <div class="item-head">
+                <div>
+                  <h4>${NIBS.esc(m.code)} — ${NIBS.esc(m.title)}</h4>
+                  <div class="meta">NQF ${m.nqf_level} • EISA Focus Area ${m.eisa_focus_area || '—'}</div>
+                </div>
+              </div>
+            </div>
+          `).join('')).join('')}
+        </div>
+      `;
+
+      // Filter
+      document.querySelectorAll('[data-filter]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const f = btn.dataset.filter;
+          const rows = document.querySelectorAll('#matrixTable tbody tr');
+          rows.forEach(tr => {
+            const type = tr.querySelector('td:nth-child(3)')?.textContent.trim() || '';
+            tr.style.display = (f === 'all' || type === f) ? '' : 'none';
+          });
+        });
+      });
+      // Document status changes
+      main.addEventListener('click', async (e) => {
+        const a = e.target.closest('[data-review]');
+        if (a) { await NIBS.api('/api/curriculum/documents/' + a.dataset.review + '/status', { method: 'POST', body: { upload_status: 'needs_review' } }); location.reload(); }
+        const ap = e.target.closest('[data-approve-doc]');
+        if (ap) { await NIBS.api('/api/curriculum/documents/' + ap.dataset.approveDoc + '/status', { method: 'POST', body: { upload_status: 'approved' } }); location.reload(); }
+        const p = e.target.closest('[data-publish-doc]');
+        if (p) { await NIBS.api('/api/curriculum/documents/' + p.dataset.publishDoc + '/status', { method: 'POST', body: { upload_status: 'published' } }); location.reload(); }
+      });
+    }
+  </script>
+</body>
+</html>

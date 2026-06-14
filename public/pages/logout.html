@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <title>Logging out...</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body style="padding: 80px 0;">
+  <div class="container center-text">
+    <p>Signing you out...</p>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script>
+    fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' }).finally(() => {
+      setTimeout(() => location.href = '/', 400);
+    });
+  </script>
+</body>
+</html>

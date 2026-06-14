@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Finance — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/finance'));
+      const [l, p] = await Promise.all([NIBS.api('/api/finance/learners'), NIBS.api('/api/finance/payments')]);
+      render(l.learners, p.payments);
+    })();
+
+    function render(learners, payments) {
+      const main = document.getElementById('main');
+      const active = learners.filter(l => l.payment_status === 'active').length;
+      const pending = learners.filter(l => l.payment_status === 'pending_payment').length;
+      const totalPaid = payments.filter(p => p.status === 'paid').reduce((s, p) => s + (p.amount_cents || 0), 0);
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Finance</div>
+            <h1>Payments & access</h1>
+            <div class="meta">Activate, suspend, refund and reconcile payments</div>
+          </div>
+        </div>
+
+        <div class="grid-4 mb-24">
+          <div class="kpi"><span class="label">Active</span><span class="value">${active}</span></div>
+          <div class="kpi"><span class="label">Pending payment</span><span class="value">${pending}</span></div>
+          <div class="kpi"><span class="label">Total received</span><span class="value" style="font-size:1.4rem;">R ${(totalPaid/100).toFixed(0)}</span></div>
+          <div class="kpi"><span class="label">Payments</span><span class="value">${payments.length}</span></div>
+        </div>
+
+        <div class="card pad-lg mb-24">
+          <h3>Learners</h3>
+          <table class="tbl">
+            <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Payment</th><th>Cohort</th><th>Phone</th><th></th></tr></thead>
+            <tbody>${learners.map(l => `<tr>
+              <td><b>${NIBS.esc(l.full_name)}</b></td>
+              <td>${NIBS.esc(l.email)}</td>
+              <td>${NIBS.statusPill(l.status)}</td>
+              <td>${NIBS.statusPill(l.payment_status)}</td>
+              <td>${NIBS.esc(l.cohort_id || '—')}</td>
+              <td>${NIBS.esc(l.phone || '—')}</td>
+              <td>
+                <button class="btn sm primary" data-act="paid" data-id="${l.id}">Mark paid</button>
+                <button class="btn sm" data-act="suspend" data-id="${l.id}">Suspend</button>
+                <button class="btn sm" data-act="active" data-id="${l.id}">Activate</button>
+              </td>
+            </tr>`).join('') || '<tr><td colspan="7" class="muted">No learners.</td></tr>'}</tbody>
+          </table>
+        </div>
+
+        <div class="card pad-lg">
+          <h3>Payments log</h3>
+          <table class="tbl">
+            <thead><tr><th>Date</th><th>Learner</th><th>Method</th><th>Reference</th><th>Amount</th><th>Status</th></tr></thead>
+            <tbody>${payments.map(p => `<tr>
+              <td>${NIBS.fmtDateTime(p.created_at)}</td>
+              <td>${NIBS.esc(p.full_name || p.user_id)}</td>
+              <td>${NIBS.esc(p.method || '—')}</td>
+              <td>${NIBS.esc(p.reference || '—')}</td>
+              <td>R ${((p.amount_cents || 0)/100).toFixed(2)}</td>
+              <td>${NIBS.statusPill(p.status)}</td>
+            </tr>`).join('') || '<tr><td colspan="6" class="muted">No payments yet.</td></tr>'}</tbody>
+          </table>
+        </div>
+      `;
+      main.addEventListener('click', async (e) => {
+        const b = e.target.closest('button[data-act]');
+        if (!b) return;
+        const id = b.dataset.id; const act = b.dataset.act;
+        try {
+          if (act === 'paid') await NIBS.api('/api/finance/payment', { method: 'POST', body: { user_id: id, amount_cents: 1850000, method: 'eft', status: 'paid' } });
+          else await NIBS.api('/api/finance/access', { method: 'POST', body: { user_id: id, status: act } });
+          NIBS.toast('Updated', 'ok');
+          setTimeout(() => location.reload(), 400);
+        } catch (err) { NIBS.toast('Failed: ' + err.message, 'err'); }
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,14 @@
+node_modules/
+.env
+data/
+uploads/
+exports/
+*.db
+*.db-journal
+*.log
+.DS_Store
+.idea/
+.vscode/
+*.swp
+nibs.db
+database/nibs.db*

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POE Item — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    const itemId = location.pathname.split('/').pop();
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/app/poe'));
+      const d = await NIBS.api('/api/poe/items/' + itemId);
+      render(d);
+    })();
+
+    function fieldInput(f, value) {
+      const v = value == null ? '' : String(value);
+      if (f.field_type === 'long_text' || f.field_type === 'reflection' || f.field_type === 'rich_text' || f.field_type === 'evidence_note') {
+        return `<textarea data-fid="${f.id}" data-type="${f.field_type}" placeholder="${NIBS.esc(f.helper || '')}">${NIBS.esc(v)}</textarea>`;
+      }
+      if (f.field_type === 'short_text') {
+        return `<input type="text" data-fid="${f.id}" data-type="${f.field_type}" value="${NIBS.esc(v)}" placeholder="${NIBS.esc(f.helper || '')}" />`;
+      }
+      if (f.field_type === 'date') {
+        return `<input type="date" data-fid="${f.id}" data-type="${f.field_type}" value="${NIBS.esc(v)}" />`;
+      }
+      if (f.field_type === 'number') {
+        return `<input type="number" data-fid="${f.id}" data-type="${f.field_type}" value="${NIBS.esc(v)}" />`;
+      }
+      if (f.field_type === 'checkbox') {
+        return `<label class="flex center gap-8" style="font-weight:500;"><input type="checkbox" data-fid="${f.id}" data-type="${f.field_type}" ${v === '1' || v === 'true' ? 'checked' : ''}/> I confirm</label>`;
+      }
+      if (f.field_type === 'file_upload' || f.field_type === 'image_upload') {
+        return `<input type="file" data-fid="${f.id}" data-type="${f.field_type}" multiple />`;
+      }
+      if (f.field_type === 'signature') {
+        return `<input type="text" data-fid="${f.id}" data-type="${f.field_type}" placeholder="Type your full name as signature" value="${NIBS.esc(v)}" />`;
+      }
+      return `<input type="text" data-fid="${f.id}" data-type="${f.field_type}" value="${NIBS.esc(v)}" />`;
+    }
+
+    function render(d) {
+      const it = d.item;
+      const sec = d.section;
+      const tpl = d.template;
+      const fields = d.fields || [];
+      const sub = d.mySubmission;
+      const files = d.myFiles || [];
+      const history = d.history || [];
+      const data = sub ? (function(){ try { return JSON.parse(sub.data_json || '{}'); } catch { return {}; } })() : {};
+      const main = document.getElementById('main');
+
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">POE • ${NIBS.esc(sec.title)}</div>
+            <h1>${NIBS.esc(it.title)}</h1>
+            <div class="meta">${NIBS.esc(it.code || '')} • ${NIBS.esc(sec.code || '')} • ${NIBS.esc(tpl.title)}</div>
+          </div>
+          <div class="flex gap-12">
+            <a class="btn" href="/app/poe">← Back to POE</a>
+            <button class="btn" id="draftBtn">💾 Save draft</button>
+            <button class="btn primary" id="submitBtn">Submit</button>
+          </div>
+        </div>
+        <div class="demo-banner">⚠ Demo content — replace with official QCTO POE guide when uploaded.</div>
+
+        <div class="poe-section">
+          <div class="head">
+            <h3>${NIBS.esc(it.title)}</h3>
+            <div>${sub ? NIBS.statusPill(sub.status) : '<span class="pill grey">not started</span>'}</div>
+          </div>
+          <p>${NIBS.esc(it.instructions || 'Complete this POE item as part of your evidence portfolio.')}</p>
+          <div class="grid-2">
+            <div class="why"><b>Why this evidence is required:</b> ${NIBS.esc(it.why_required || '—')}</div>
+            <div class="why" style="background:#E2F0E5; border-color:#C8E0CD;"><b>How to prepare:</b> ${NIBS.esc(it.how_to_prepare || '—')}</div>
+          </div>
+          <div class="why mt-8" style="background:#F8DED9; border-color:#EFC3B9;"><b>Common mistakes:</b> ${NIBS.esc(it.common_mistakes || '—')}</div>
+          <div class="form-row mt-16">
+            <div><label>Linked curriculum outcome</label><input value="${NIBS.esc(it.linked_outcome || 'Office Administrator exit-level outcomes')}" disabled /></div>
+            <div><label>Internal assessment criteria</label><input value="${NIBS.esc(it.assessment_criteria || 'Per curriculum document')}" disabled /></div>
+          </div>
+        </div>
+
+        <div class="poe-section">
+          <h3>Learner response</h3>
+          <div class="grid-2">
+            ${fields.map(f => `
+              <div class="field">
+                <label>${NIBS.esc(f.label)}${f.required ? ' *' : ''}</label>
+                ${fieldInput(f, data[f.id])}
+                ${f.helper ? `<div class="small muted mt-8">${NIBS.esc(f.helper)}</div>` : ''}
+              </div>
+            `).join('')}
+          </div>
+          <label class="declaration" style="margin-top: 16px;">
+            <input type="checkbox" id="declaration" ${sub && sub.declaration_signed ? 'checked' : ''} />
+            <span>I declare that the information and evidence provided is my own work and is true and correct.</span>
+          </label>
+        </div>
+
+        <div class="poe-section" id="preview">
+          <h3>Preview PDF section</h3>
+          <p class="muted small">In production, this renders the exact layout that will be exported into your POE pack.</p>
+          <div class="card flat" id="pdfPreview" style="background: var(--bg-2); padding: 24px; border-radius: 8px;"></div>
+        </div>
+
+        ${files.length ? `<div class="poe-section">
+          <h3>Uploaded evidence</h3>
+          <ul>${files.map(f => `<li><a href="/uploads/${NIBS.esc(f.stored_name)}" target="_blank">${NIBS.esc(f.original_name)}</a> <span class="small muted">(${(f.size_bytes/1024).toFixed(1)} KB)</span></li>`).join('')}</ul>
+        </div>` : ''}
+
+        ${history.length ? `<div class="poe-section">
+          <h3>Version history</h3>
+          ${history.map(h => `<div class="small muted">v${h.version} • ${NIBS.fmtDateTime(h.changed_at)} • ${NIBS.esc(h.comment || '')}</div>`).join('')}
+        </div>` : ''}
+      `;
+
+      function collect() {
+        const out = {};
+        const decl = document.getElementById('declaration').checked ? 1 : 0;
+        document.querySelectorAll('[data-fid]').forEach(el => {
+          const fid = el.dataset.fid;
+          const t = el.dataset.type;
+          let v = el.type === 'checkbox' ? (el.checked ? '1' : '0') : el.value;
+          out[fid] = v;
+        });
+        return { data: out, decl };
+      }
+
+      async function uploadFiles() {
+        const files = Array.from(document.querySelectorAll('input[type="file"][data-fid]'));
+        for (const el of files) {
+          if (!el.files || !el.files.length) continue;
+          const fd = new FormData();
+          for (const f of el.files) fd.append('files', f);
+          fd.append('field_id', el.dataset.fid);
+          try {
+            const r = await fetch('/api/poe/items/' + itemId + '/upload', { method: 'POST', body: fd, credentials: 'same-origin' });
+            if (!r.ok) throw new Error('upload failed');
+          } catch (e) { NIBS.toast('File upload failed: ' + e.message, 'err'); }
+        }
+      }
+
+      async function save(action) {
+        const { data, decl } = collect();
+        try {
+          await uploadFiles();
+          await NIBS.api('/api/poe/items/' + itemId + '/submit', { method: 'POST', body: { data, declaration_signed: decl, action } });
+          NIBS.toast(action === 'submit' ? 'Submitted for review' : 'Draft saved', 'ok');
+          if (action === 'submit') setTimeout(() => location.reload(), 600);
+        } catch (e) { NIBS.toast('Save failed: ' + e.message, 'err'); }
+      }
+
+      document.getElementById('draftBtn').onclick = () => save('draft');
+      document.getElementById('submitBtn').onclick = () => save('submit');
+
+      // live preview
+      function updatePreview() {
+        const { data, decl } = collect();
+        const prev = document.getElementById('pdfPreview');
+        prev.innerHTML = `
+          <div style="background:#fff; padding: 18px; border: 1px solid var(--line); border-radius: 6px;">
+            <div style="font-size:.7rem; letter-spacing:.12em; text-transform:uppercase; color: var(--ink-3);">Office Administrator • POE</div>
+            <div style="font-family: var(--font-serif); font-size: 1.3rem; margin: 4px 0 14px;">${NIBS.esc(it.title)}</div>
+            ${fields.map(f => `<div style="margin-bottom: 10px;"><div style="font-size:.7rem; letter-spacing:.08em; text-transform:uppercase; color: var(--ink-3);">${NIBS.esc(f.label)}</div><div style="font-size: .95rem; white-space: pre-wrap; margin-top: 2px;">${NIBS.esc((data[f.id] || '—'))}</div></div>`).join('')}
+            <div style="margin-top: 12px; font-size:.85rem; color: var(--ink-3);">Declaration: ${decl ? '✓ signed' : 'unsigned'}</div>
+          </div>
+        `;
+      }
+      document.querySelectorAll('[data-fid]').forEach(el => el.addEventListener('input', updatePreview));
+      document.getElementById('declaration').addEventListener('change', updatePreview);
+      updatePreview();
+    }
+  </script>
+</body>
+</html>

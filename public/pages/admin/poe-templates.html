@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>POE Templates — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/admin/poe-templates'));
+      const t = await NIBS.api('/api/poe/templates');
+      render(t.templates);
+    })();
+
+    async function loadTemplate(id) {
+      const t = await NIBS.api('/api/poe/templates/' + id + '/full');
+      return t;
+    }
+
+    function render(templates) {
+      const main = document.getElementById('main');
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs">Admin • POE Templates</div>
+            <h1>POE templates</h1>
+            <div class="meta">${templates.length} templates</div>
+          </div>
+          <div class="flex gap-12">
+            <button class="btn primary" id="newTplBtn">➕ New template</button>
+          </div>
+        </div>
+        <div class="demo-banner">⚠ Demo content — the demo template loads the 12 demo POE sections. Replace with the official QCTO POE guide when uploaded.</div>
+        <div id="tplList"></div>
+      `;
+      const list = document.getElementById('tplList');
+      templates.forEach(async t => {
+        const full = await loadTemplate(t.id);
+        const card = document.createElement('div');
+        card.className = 'card pad-lg';
+        card.style.marginBottom = '16px';
+        card.innerHTML = `
+          <div class="card-head">
+            <div><h3>${NIBS.esc(t.title)}</h3><span class="pill ${t.status === 'published' ? 'green' : 'grey'}">${t.status}</span></div>
+            <div class="flex gap-8">
+              <button class="btn sm" data-add-section="${t.id}">+ Section</button>
+              <button class="btn sm primary" data-publish="${t.id}">Publish</button>
+            </div>
+          </div>
+          ${(full.sections || []).map(s => `
+            <div class="poe-section">
+              <div class="head"><h3>${NIBS.esc(s.title)}</h3><span class="pill grey">${(full.items || []).filter(i => i.section_id === s.id).length} items</span></div>
+              <p class="muted small">${NIBS.esc(s.description || '')}</p>
+              <div class="grid-2 mt-8">
+                ${(full.items || []).filter(i => i.section_id === s.id).map(i => `
+                  <div class="poe-item">
+                    <div class="item-head"><div><h4>${NIBS.esc(i.code || '—')} — ${NIBS.esc(i.title)}</h4></div></div>
+                    <div class="meta">${NIBS.esc((i.instructions || '').slice(0,120))}…</div>
+                  </div>
+                `).join('')}
+                <button class="btn sm" data-add-item="${s.id}">+ Add POE item</button>
+              </div>
+            </div>
+          `).join('') || '<p class="muted">No sections yet.</p>'}
+        `;
+        list.appendChild(card);
+      });
+
+      list.addEventListener('click', async (e) => {
+        const ps = e.target.closest('[data-publish]');
+        if (ps) { await NIBS.api('/api/poe/templates/' + ps.dataset.publish + '/publish', { method: 'POST' }); location.reload(); return; }
+        const asec = e.target.closest('[data-add-section]');
+        if (asec) {
+          const title = prompt('Section title:'); if (!title) return;
+          await NIBS.api('/api/poe/sections', { method: 'POST', body: { template_id: asec.dataset.addSection, title } });
+          location.reload();
+        }
+        const ai = e.target.closest('[data-add-item]');
+        if (ai) {
+          const code = prompt('Item code:'); const title = prompt('Item title:'); if (!code || !title) return;
+          await NIBS.api('/api/poe/items', { method: 'POST', body: { section_id: ai.dataset.addItem, code, title } });
+          location.reload();
+        }
+      });
+      document.getElementById('newTplBtn').onclick = async () => {
+        const title = prompt('Template title:'); if (!title) return;
+        const c = await NIBS.api('/api/courses');
+        await NIBS.api('/api/poe/templates', { method: 'POST', body: { title, course_id: c.courses[0].id } });
+        location.reload();
+      };
+    }
+  </script>
+</body>
+</html>

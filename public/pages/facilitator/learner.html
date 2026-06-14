@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Learner — NIBS Pathway Portal</title>
+  <link rel="stylesheet" href="/static/css/styles.css" />
+</head>
+<body>
+  <div class="app" id="root">
+    <div class="main" id="main"><p class="muted">Loading...</p></div>
+  </div>
+  <script src="/static/js/app.js"></script>
+  <script src="/static/js/shell.js"></script>
+  <script>
+    const learnerId = location.pathname.split('/').pop();
+    (async function () {
+      const me = await NIBS.me();
+      if (!me) { location.href = '/login'; return; }
+      window.__NIBS_USER__ = me;
+      document.getElementById('root').insertAdjacentHTML('afterbegin', window.renderShell('/facilitator'));
+      const d = await NIBS.api('/api/facilitator/learners/' + learnerId);
+      render(d);
+    })();
+
+    function render(d) {
+      const main = document.getElementById('main');
+      const lp = d.lessonProgress;
+      const wb = d.wbAnswers;
+      const ps = d.poeSubs;
+      const fb = d.feedback;
+      main.innerHTML = `
+        <div class="page-head">
+          <div>
+            <div class="crumbs"><a href="/facilitator">Facilitator</a> • Learner</div>
+            <h1>${NIBS.esc(d.learner.full_name)}</h1>
+            <div class="meta">${NIBS.esc(d.learner.email)} • ${NIBS.statusPill(d.learner.status)} • ${NIBS.statusPill(d.learner.payment_status)}</div>
+          </div>
+          <div class="flex gap-12">
+            <a class="btn" href="/api/pdf/progress/${d.learner.id}" target="_blank">📄 Progress PDF</a>
+          </div>
+        </div>
+
+        <div class="grid-2 mb-24">
+          <div class="card pad-lg">
+            <h3>Lesson progress</h3>
+            <p class="muted small">${lp.length} lesson records</p>
+            ${lp.length ? `<table class="tbl"><thead><tr><th>Lesson</th><th>Status</th><th>Updated</th></tr></thead>
+            <tbody>${lp.map(p => `<tr><td>${NIBS.esc(p.title)}</td><td>${NIBS.statusPill(p.status)}</td><td>${NIBS.fmtDateTime(p.updated_at)}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">No lesson activity yet.</p>'}
+          </div>
+          <div class="card pad-lg">
+            <h3>POE submissions</h3>
+            ${ps.length ? ps.map(p => `<div class="poe-item">
+              <div class="item-head"><div><h4>${NIBS.esc(p.item_title || '')}</h4><div class="meta">${NIBS.esc(p.item_code || '')} • Attempt ${p.attempt}</div></div>${NIBS.statusPill(p.status)}</div>
+              <a class="btn sm" href="/assessor/review/${p.id}">Review as assessor →</a>
+            </div>`).join('') : '<p class="muted">No POE submissions yet.</p>'}
+          </div>
+        </div>
+
+        <div class="card pad-lg">
+          <h3>Workbook responses</h3>
+          ${wb.length ? `<table class="tbl"><thead><tr><th>Code</th><th>Status</th><th>Attempt</th><th>Updated</th></tr></thead>
+          <tbody>${wb.map(w => `<tr><td>${NIBS.esc(w.code || '—')}</td><td>${NIBS.statusPill(w.status)}</td><td>${w.attempt}</td><td>${NIBS.fmtDateTime(w.updated_at)}</td></tr>`).join('')}</tbody></table>` : '<p class="muted">No workbook activity.</p>'}
+        </div>
+
+        <div class="card pad-lg mt-24">
+          <h3>Add feedback / action</h3>
+          <form id="fbForm">
+            <label>Feedback</label><textarea name="feedback" required></textarea>
+            <div class="form-row mt-8">
+              <div><label>Context</label>
+                <select name="context_type"><option value="lesson">Lesson</option><option value="workbook">Workbook</option><option value="poe">POE</option></select>
+              </div>
+              <div><label>Context ID</label><input name="context_id" placeholder="UUID" required /></div>
+            </div>
+            <div class="form-row mt-8">
+              <label class="flex center gap-8" style="font-weight:500;"><input type="checkbox" name="return_for_correction" /> Return for correction</label>
+              <label class="flex center gap-8" style="font-weight:500;"><input type="checkbox" name="recommend_for_assessment" /> Recommend for assessment</label>
+              <label class="flex center gap-8" style="font-weight:500;"><input type="checkbox" name="flag_at_risk" /> Flag at risk</label>
+            </div>
+            <button class="btn primary mt-16">Save feedback</button>
+          </form>
+        </div>
+
+        <div class="card pad-lg mt-24">
+          <h3>Feedback history</h3>
+          ${fb.length ? fb.map(f => `<div class="poe-item"><div class="item-head"><h4>${NIBS.esc(f.context_type)}</h4><div class="meta">${NIBS.fmtDateTime(f.created_at)}</div></div><p>${NIBS.esc(f.feedback)}</p>${f.return_for_correction ? '<span class="pill red">returned for correction</span>' : ''} ${f.recommend_for_assessment ? '<span class="pill green">recommended for assessment</span>' : ''} ${f.flag_at_risk ? '<span class="pill gold">at risk</span>' : ''}</div>`).join('') : '<p class="muted">No feedback given yet.</p>'}
+        </div>
+      `;
+
+      document.getElementById('fbForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const fd = new FormData(e.target);
+        const body = Object.fromEntries(fd);
+        body.user_id = learnerId;
+        body.return_for_correction = !!fd.get('return_for_correction');
+        body.recommend_for_assessment = !!fd.get('recommend_for_assessment');
+        body.flag_at_risk = !!fd.get('flag_at_risk');
+        try {
+          await NIBS.api('/api/facilitator/feedback', { method: 'POST', body });
+          NIBS.toast('Feedback saved', 'ok');
+          setTimeout(() => location.reload(), 500);
+        } catch (err) { NIBS.toast('Failed: ' + err.message, 'err'); }
+      };
+    }
+  </script>
+</body>
+</html>
