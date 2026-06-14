@@ -33,8 +33,33 @@ login() {
     "$BASE/api/auth/login" > /dev/null
 }
 
-# Re-seed DB to a clean state
-(cd /workspace/nibs-portal && node server/seed/run.js > /dev/null 2>&1)
+# If the env is set to force an admin password rotation (v1.2+ UAT flow),
+# call /api/auth/change-password after login to clear the gate. Idempotent
+# for users who are NOT flagged must_change_password.
+maybe_clear_must_change() {
+  local jar="$1"
+  local new_pwd="$2"
+  curl -s -b "$jar" -X POST -H 'Content-Type: application/json' \
+    -d "{\"new_password\":\"$new_pwd\"}" \
+    "$BASE/api/auth/change-password" > /dev/null
+}
+
+# Re-seed DB to a clean state.
+# If ADMIN_DEFAULT_PASSWORD is set in the environment (UAT / production),
+# re-seed with the same env so the admin's must_change_password flag matches
+# what the running server will use.
+if [ -n "$ADMIN_DEFAULT_PASSWORD" ]; then
+  (cd /workspace/nibs-portal && ADMIN_DEFAULT_PASSWORD="$ADMIN_DEFAULT_PASSWORD" \
+                                ADMIN_EMAIL="${ADMIN_EMAIL:-admin@naleli.co.za}" \
+                                node server/seed/run.js > /dev/null 2>&1)
+  # After the v1.2 env-var flow, the admin is flagged must_change_password=1.
+  # Any test that logs in as the admin must call maybe_clear_must_change right
+  # after login, otherwise all admin-only /api/* calls will return 403.
+  ADMIN_MUST_CHANGE=1
+else
+  (cd /workspace/nibs-portal && node server/seed/run.js > /dev/null 2>&1)
+  ADMIN_MUST_CHANGE=0
+fi
 
 echo "=== 1. Public landing page ==="
 check_status "GET /" 200 "$BASE/" /dev/null
@@ -49,7 +74,15 @@ check_contains "dashboard" "learners" "$BASE/api/reports/dashboard" $TMP/superad
 check_contains "users list" "users" "$BASE/api/users" $TMP/superadmin.jar
 
 echo "=== 3. Admin ==="
-login admin@naleli.co.za ChangeMe123! admin
+# Login with the correct admin password: env override if set, else legacy.
+ADMIN_LOGIN_PWD="${ADMIN_DEFAULT_PASSWORD:-ChangeMe123!}"
+login "${ADMIN_EMAIL:-admin@naleli.co.za}" "$ADMIN_LOGIN_PWD" admin
+# If the admin was seeded with must_change_password=1 (v1.2 UAT flow),
+# clear the gate by rotating to a stable test password. This makes the
+# canonical smoke test work both with and without the env var.
+if [ "$ADMIN_MUST_CHANGE" = "1" ]; then
+  maybe_clear_must_change $TMP/admin.jar "SmokeTestAdmin!2026"
+fi
 check_contains "me admin" "admin" "$BASE/api/auth/me" $TMP/admin.jar
 check_contains "audit" "rows" "$BASE/api/audit" $TMP/admin.jar
 check_contains "curriculum matrix" "rows" "$BASE/api/curriculum/matrix" $TMP/admin.jar
